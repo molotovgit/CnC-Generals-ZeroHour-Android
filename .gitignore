@@ -1,0 +1,37 @@
+# ── Build outputs ───────────────────────────────────────────────
+build/
+out/
+_deps/
+*.o
+*.a
+*.obj
+CMakeCache.txt
+CMakeFiles/
+
+# ── Android app build ───────────────────────────────────────────
+android/**/build/
+android/**/.gradle/
+android/**/local.properties
+android/**/.cxx/
+
+# ── Prebuilt native libraries (build them from source; see BUILDING.md) ──
+*.so
+
+# ── Game data & binaries — NOT redistributable ──────────────────
+# The engine is GPLv3 (open). The GAME ASSETS are EA-copyrighted and are
+# NOT included here: you must supply your own retail Generals: Zero Hour
+# files (.big, movies) to build/run. See docs/GAME-FILES.md.
+*.big
+*.bik
+*.pak
+*.apk
+*.aab
+Data/Movies/
+
+# ── IDE / OS ────────────────────────────────────────────────────
+.idea/
+.vs/
+.vscode/
+*.user
+.DS_Store
+Thumbs.db

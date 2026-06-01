@@ -1,0 +1,634 @@
+/*
+**	Command & Conquer Generals Zero Hour(tm)
+**	Copyright 2025 Electronic Arts Inc.
+**
+**	This program is free software: you can redistribute it and/or modify
+**	it under the terms of the GNU General Public License as published by
+**	the Free Software Foundation, either version 3 of the License, or
+**	(at your option) any later version.
+**
+**	This program is distributed in the hope that it will be useful,
+**	but WITHOUT ANY WARRANTY; without even the implied warranty of
+**	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**	GNU General Public License for more details.
+**
+**	You should have received a copy of the GNU General Public License
+**	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+////////////////////////////////////////////////////////////////////////////////
+//																																						//
+//  (c) 2001-2003 Electronic Arts Inc.																				//
+//																																						//
+////////////////////////////////////////////////////////////////////////////////
+
+// FILE: UnicodeString.cpp
+//-----------------------------------------------------------------------------
+//
+//                       Westwood Studios Pacific.
+//
+//                       Confidential Information
+//                Copyright (C) 2001 - All Rights Reserved
+//
+//-----------------------------------------------------------------------------
+//
+// Project:    RTS3
+//
+// File name:  UnicodeString.cpp
+//
+// Created:    Steven Johnson, October 2001
+//
+// Desc:       General-purpose string classes
+//
+//-----------------------------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////////
+#include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+
+#include "Common/CriticalSection.h"
+
+
+// -----------------------------------------------------
+
+/*static*/ const UnicodeString UnicodeString::TheEmptyString;
+
+#ifndef _WIN32
+// GeneralsX @bugfix fbraz 03/06/2026 Use POSIX locale for vswprintf to allow non-ASCII
+// wide chars (e.g. Cyrillic) in format strings. macOS needs <xlocale.h>, Linux glibc
+// exposes uselocale/newlocale via <locale.h> under _GNU_SOURCE.
+#if defined(__APPLE__)
+  #include <xlocale.h>
+#else
+  #ifndef _GNU_SOURCE
+    #define _GNU_SOURCE
+  #endif
+#endif
+#include <locale.h>
+
+static Bool isWidePrintfDigit(WideChar ch)
+{
+	return ch >= L'0' && ch <= L'9';
+}
+
+static Bool isWidePrintfFlag(WideChar ch)
+{
+	return ch == L'-' || ch == L'+' || ch == L' ' || ch == L'#' || ch == L'0' || ch == L'\'';
+}
+
+// GeneralsX @bugfix copilot 19/04/2026 Normalize wide printf specifiers to preserve MSVC semantics on POSIX.
+static Bool normalizeWidePrintfFormatForPosix(const WideChar *src, WideChar *dst, Int dstCapacity)
+{
+	if (src == nullptr || dst == nullptr || dstCapacity <= 0)
+		return FALSE;
+
+	Int srcPos = 0;
+	Int dstPos = 0;
+
+	while (src[srcPos] != 0)
+	{
+		if (dstPos >= dstCapacity - 1)
+			return FALSE;
+
+		if (src[srcPos] != L'%')
+		{
+			dst[dstPos++] = src[srcPos++];
+			continue;
+		}
+
+		dst[dstPos++] = src[srcPos++];
+
+		if (src[srcPos] == L'%')
+		{
+			dst[dstPos++] = src[srcPos++];
+			continue;
+		}
+
+		const Int tokenStart = srcPos;
+		Int tokenPos = srcPos;
+		Bool hasLengthModifier = FALSE;
+
+		while (isWidePrintfDigit(src[tokenPos]))
+			tokenPos++;
+		if (src[tokenPos] == L'$')
+			tokenPos++;
+
+		while (isWidePrintfFlag(src[tokenPos]))
+			tokenPos++;
+
+		if (src[tokenPos] == L'*')
+		{
+			tokenPos++;
+			while (isWidePrintfDigit(src[tokenPos]))
+				tokenPos++;
+			if (src[tokenPos] == L'$')
+				tokenPos++;
+		}
+		else
+		{
+			while (isWidePrintfDigit(src[tokenPos]))
+				tokenPos++;
+		}
+
+		if (src[tokenPos] == L'.')
+		{
+			tokenPos++;
+			if (src[tokenPos] == L'*')
+			{
+				tokenPos++;
+				while (isWidePrintfDigit(src[tokenPos]))
+					tokenPos++;
+				if (src[tokenPos] == L'$')
+					tokenPos++;
+			}
+			else
+			{
+				while (isWidePrintfDigit(src[tokenPos]))
+					tokenPos++;
+			}
+		}
+
+		if (src[tokenPos] == L'h' || src[tokenPos] == L'l')
+		{
+			hasLengthModifier = TRUE;
+			tokenPos++;
+			if (src[tokenPos] == L'h' || src[tokenPos] == L'l')
+				tokenPos++;
+		}
+		else if (src[tokenPos] == L'j' || src[tokenPos] == L'z' || src[tokenPos] == L't' || src[tokenPos] == L'L')
+		{
+			hasLengthModifier = TRUE;
+			tokenPos++;
+		}
+
+		const WideChar conversion = src[tokenPos];
+		if (conversion == 0)
+			return FALSE;
+
+		for (Int i = tokenStart; i < tokenPos; ++i)
+		{
+			if (dstPos >= dstCapacity - 1)
+				return FALSE;
+			dst[dstPos++] = src[i];
+		}
+
+		if (!hasLengthModifier && conversion == L's')
+		{
+			if (dstPos >= dstCapacity - 2)
+				return FALSE;
+			dst[dstPos++] = L'l';
+			dst[dstPos++] = L's';
+		}
+		else if (!hasLengthModifier && conversion == L'S')
+		{
+			if (dstPos >= dstCapacity - 2)
+				return FALSE;
+			dst[dstPos++] = L'h';
+			dst[dstPos++] = L's';
+		}
+		else
+		{
+			if (dstPos >= dstCapacity - 1)
+				return FALSE;
+			dst[dstPos++] = conversion;
+		}
+
+		srcPos = tokenPos + 1;
+	}
+
+	dst[dstPos] = 0;
+	return TRUE;
+}
+#endif
+
+// -----------------------------------------------------
+#ifdef RTS_DEBUG
+void UnicodeString::validate() const
+{
+	if (!m_data) return;
+	DEBUG_ASSERTCRASH(m_data->m_refCount > 0, ("m_refCount is zero"));
+	DEBUG_ASSERTCRASH(m_data->m_numCharsAllocated > 0, ("m_numCharsAllocated is zero"));
+	DEBUG_ASSERTCRASH(wcslen(m_data->peek())+1 <= m_data->m_numCharsAllocated,("str is too long for storage"));
+}
+#endif
+
+// -----------------------------------------------------
+UnicodeString::UnicodeString(const UnicodeString& stringSrc) : m_data(stringSrc.m_data)
+{
+	ScopedCriticalSection scopedCriticalSection(TheUnicodeStringCriticalSection);
+	if (m_data)
+		++m_data->m_refCount;
+	validate();
+}
+
+// -----------------------------------------------------
+void UnicodeString::ensureUniqueBufferOfSize(int numCharsNeeded, Bool preserveData, const WideChar* strToCopy, const WideChar* strToCat)
+{
+	validate();
+
+	const int usableNumChars = numCharsNeeded - 1;
+
+	if (m_data &&
+			m_data->m_refCount == 1 &&
+			m_data->m_numCharsAllocated >= numCharsNeeded)
+	{
+		// no buffer manhandling is needed (it's already large enough, and unique to us)
+		if (strToCopy)
+		{
+			// TheSuperHackers @fix Mauller 04/04/2025 Replace wcscpy with safer memmove as memory regions can overlap when part of string is copied to itself
+			DEBUG_ASSERTCRASH(usableNumChars <= wcslen(strToCopy), ("strToCopy is too small"));
+			memmove(m_data->peek(), strToCopy, usableNumChars * sizeof(WideChar));
+			m_data->peek()[usableNumChars] = 0;
+		}
+		if (strToCat)
+			wcscat(m_data->peek(), strToCat);
+		return;
+	}
+
+	DEBUG_ASSERTCRASH(TheDynamicMemoryAllocator != nullptr, ("Cannot use dynamic memory allocator before its initialization. Check static initialization order."));
+	DEBUG_ASSERTCRASH(numCharsNeeded <= MAX_LEN, ("UnicodeString::ensureUniqueBufferOfSize exceeds max string length %d with requested length %d", MAX_LEN, numCharsNeeded));
+	int minBytes = sizeof(UnicodeStringData) + numCharsNeeded*sizeof(WideChar);
+	int actualBytes = TheDynamicMemoryAllocator->getActualAllocationSize(minBytes);
+	UnicodeStringData* newData = (UnicodeStringData*)TheDynamicMemoryAllocator->allocateBytesDoNotZero(actualBytes, "STR_UnicodeString::ensureUniqueBufferOfSize");
+	newData->m_refCount = 1;
+	newData->m_numCharsAllocated = (actualBytes - sizeof(UnicodeStringData))/sizeof(WideChar);
+#if defined(RTS_DEBUG)
+	newData->m_debugptr = newData->peek();	// just makes it easier to read in the debugger
+#endif
+
+	if (m_data && preserveData)
+		wcscpy(newData->peek(), m_data->peek());
+	else
+		newData->peek()[0] = 0;
+
+	// do these BEFORE releasing the old buffer, so that self-copies
+	// or self-cats will work correctly.
+	if (strToCopy)
+	{
+		DEBUG_ASSERTCRASH(usableNumChars <= wcslen(strToCopy), ("strToCopy is too small"));
+		wcsncpy(newData->peek(), strToCopy, usableNumChars);
+		newData->peek()[usableNumChars] = 0;
+	}
+	if (strToCat)
+		wcscat(newData->peek(), strToCat);
+
+	releaseBuffer();
+	m_data = newData;
+
+	validate();
+}
+
+
+// -----------------------------------------------------
+void UnicodeString::releaseBuffer()
+{
+	ScopedCriticalSection scopedCriticalSection(TheUnicodeStringCriticalSection);
+
+	validate();
+	if (m_data)
+	{
+		if (--m_data->m_refCount == 0)
+		{
+			TheDynamicMemoryAllocator->freeBytes(m_data);
+		}
+		m_data = nullptr;
+	}
+}
+
+// -----------------------------------------------------
+UnicodeString::UnicodeString(const WideChar* s) : m_data(nullptr)
+{
+	int len = s ? (int)wcslen(s) : 0;
+	if (len > 0)
+	{
+		ensureUniqueBufferOfSize(len + 1, false, s, nullptr);
+	}
+	validate();
+}
+
+// -----------------------------------------------------
+UnicodeString::UnicodeString(const WideChar* s, int len) : m_data(nullptr)
+{
+	if (len > 0)
+	{
+		ensureUniqueBufferOfSize(len + 1, false, s, nullptr);
+	}
+	validate();
+}
+
+// -----------------------------------------------------
+void UnicodeString::set(const UnicodeString& stringSrc)
+{
+	ScopedCriticalSection scopedCriticalSection(TheUnicodeStringCriticalSection);
+
+	validate();
+	if (&stringSrc != this)
+	{
+		releaseBuffer();
+		m_data = stringSrc.m_data;
+		if (m_data)
+			++m_data->m_refCount;
+	}
+	validate();
+}
+
+// -----------------------------------------------------
+void UnicodeString::set(const WideChar* s)
+{
+	int len = s ? wcslen(s) : 0;
+	set(s, len);
+}
+
+// -----------------------------------------------------
+void UnicodeString::set(const WideChar* s, int len)
+{
+	validate();
+	if (!m_data || s != peek())
+	{
+		if (len > 0)
+		{
+			ensureUniqueBufferOfSize(len + 1, false, s, nullptr);
+		}
+		else
+		{
+			releaseBuffer();
+		}
+	}
+	validate();
+}
+
+// -----------------------------------------------------
+WideChar* UnicodeString::getBufferForRead(Int len)
+{
+	validate();
+	DEBUG_ASSERTCRASH(len>0, ("No need to allocate 0 len strings."));
+	ensureUniqueBufferOfSize(len + 1, false, nullptr, nullptr);
+	validate();
+	return peek();
+}
+
+// -----------------------------------------------------
+void UnicodeString::translate(const AsciiString& stringSrc)
+{
+	validate();
+	/// @todo srj put in a real translation here; this will only work for 7-bit ascii
+	clear();
+	Int len = stringSrc.getLength();
+	for (Int i = 0; i < len; i++)
+		concat((WideChar)stringSrc.getCharAt(i));
+	validate();
+}
+
+// -----------------------------------------------------
+void UnicodeString::concat(const WideChar* s)
+{
+	validate();
+	int addlen = wcslen(s);
+	if (addlen == 0)
+		return;	// my, that was easy
+
+	if (m_data)
+	{
+		ensureUniqueBufferOfSize(getLength() + addlen + 1, true, nullptr, s);
+	}
+	else
+	{
+		set(s);
+	}
+	validate();
+}
+
+// -----------------------------------------------------
+void UnicodeString::trim()
+{
+	validate();
+
+	if (m_data)
+	{
+		const WideChar *c = peek();
+
+		//	Strip leading white space from the string.
+		while (c && iswspace(*c))
+		{
+			c++;
+		}
+		if (c != peek())
+		{
+			set(c);
+		}
+
+		trimEnd();
+	}
+	validate();
+}
+
+// -----------------------------------------------------
+void UnicodeString::trimEnd()
+{
+	validate();
+
+	if (m_data)
+	{
+		//	Clip trailing white space from the string.
+		const int len = wcslen(peek());
+		int index = len;
+		while (index > 0 && iswspace(getCharAt(index - 1)))
+		{
+			--index;
+		}
+
+		if (index < len)
+		{
+			truncateTo(index);
+		}
+	}
+	validate();
+}
+
+// -----------------------------------------------------
+void UnicodeString::trimEnd(const WideChar c)
+{
+	validate();
+
+	if (m_data)
+	{
+		// Clip trailing consecutive occurrences of c from the string.
+		const int len = wcslen(peek());
+		int index = len;
+		while (index > 0 && getCharAt(index - 1) == c)
+		{
+			--index;
+		}
+
+		if (index < len)
+		{
+			truncateTo(index);
+		}
+	}
+	validate();
+}
+
+// -----------------------------------------------------
+void UnicodeString::removeLastChar()
+{
+	truncateBy(1);
+}
+
+// -----------------------------------------------------
+void UnicodeString::truncateBy(const Int charCount)
+{
+	validate();
+	if (m_data && charCount > 0)
+	{
+		const size_t len = wcslen(peek());
+		if (len > 0)
+		{
+			ensureUniqueBufferOfSize(len + 1, true, nullptr, nullptr);
+			size_t count = charCount;
+			if (charCount > len)
+			{
+				count = len;
+			}
+			peek()[len - count] = 0;
+		}
+	}
+	validate();
+}
+
+// -----------------------------------------------------
+void UnicodeString::truncateTo(const Int maxLength)
+{
+	validate();
+	if (m_data)
+	{
+		const size_t len = wcslen(peek());
+		if (len > maxLength)
+		{
+			ensureUniqueBufferOfSize(len + 1, true, nullptr, nullptr);
+			peek()[maxLength] = 0;
+		}
+	}
+	validate();
+}
+
+// -----------------------------------------------------
+void UnicodeString::format(UnicodeString format, ...)
+{
+	validate();
+	va_list args;
+  va_start(args, format);
+	format_va(format, args);
+  va_end(args);
+	validate();
+}
+
+// -----------------------------------------------------
+void UnicodeString::format(const WideChar* format, ...)
+{
+	validate();
+	va_list args;
+  va_start(args, format);
+	format_va(format, args);
+  va_end(args);
+	validate();
+}
+
+// -----------------------------------------------------
+void UnicodeString::format_va(const UnicodeString& format, va_list args)
+{
+	format_va(format.str(), args);
+}
+
+// -----------------------------------------------------
+void UnicodeString::format_va(const WideChar* format, va_list args)
+{
+	validate();
+	WideChar buf[MAX_FORMAT_BUF_LEN];
+	const WideChar *effectiveFormat = format;
+#ifndef _WIN32
+	WideChar normalizedFormat[MAX_FORMAT_BUF_LEN * 2];
+	if (normalizeWidePrintfFormatForPosix(format, normalizedFormat, ARRAY_SIZE(normalizedFormat)))
+	{
+		effectiveFormat = normalizedFormat;
+	}
+#endif
+	// GeneralsX @bugfix fbraz 03/06/2026 vswprintf rejects non-ASCII wide chars in the C locale
+	// (returns -1 for any format string containing e.g. Cyrillic). Use a UTF-8 locale for
+	// the duration of the call so Cyrillic format strings pass through correctly.
+#ifndef _WIN32
+	static locale_t s_utf8_locale = newlocale(LC_CTYPE_MASK, "UTF-8", (locale_t)0);
+	locale_t old_locale = uselocale(s_utf8_locale);
+#endif
+	const int result = vswprintf(buf, sizeof(buf)/sizeof(WideChar), effectiveFormat, args);
+#ifndef _WIN32
+	uselocale(old_locale);
+#endif
+	if (result >= 0)
+	{
+		set(buf);
+		validate();
+	}
+	else
+	{
+		DEBUG_CRASH(("UnicodeString::format_va failed with code:%d", result));
+	}
+}
+
+// -----------------------------------------------------
+Bool UnicodeString::startsWith(const WideChar* p) const
+{
+	return m_data && ::startsWith(peek(), p);
+}
+
+// -----------------------------------------------------
+Bool UnicodeString::startsWithNoCase(const WideChar* p) const
+{
+	return m_data && ::startsWithNoCase(peek(), p);
+}
+
+// -----------------------------------------------------
+Bool UnicodeString::endsWith(const WideChar* p) const
+{
+	return m_data && ::endsWith(peek(), p);
+}
+
+// -----------------------------------------------------
+Bool UnicodeString::endsWithNoCase(const WideChar* p) const
+{
+	return m_data && ::endsWithNoCase(peek(), p);
+}
+
+//-----------------------------------------------------------------------------
+Bool UnicodeString::nextToken(UnicodeString* tok, UnicodeString delimiters)
+{
+	if (this->isEmpty() || tok == this)
+		return false;
+
+	if (delimiters.isEmpty())
+		delimiters = L" \t\n\r";
+
+	Int offset;
+
+	offset = wcsspn(peek(), delimiters.str());
+	WideChar* start = peek() + offset;
+
+	offset = wcscspn(start, delimiters.str());
+	WideChar* end = start + offset;
+
+	if (end > start)
+	{
+		Int len = end - start;
+		WideChar* tmp = tok->getBufferForRead(len + 1);
+		// GeneralsX @bugfix copilot 31/03/2026 Remove 2-byte WideChar assumption in token copy.
+		memcpy(tmp, start, len * sizeof(WideChar));
+		tmp[len] = 0;
+
+		this->set(end);
+
+		return true;
+	}
+	else
+	{
+		this->clear();
+		tok->clear();
+		return false;
+	}
+}

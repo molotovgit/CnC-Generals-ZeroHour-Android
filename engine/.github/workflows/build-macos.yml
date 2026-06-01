@@ -1,0 +1,454 @@
+name: Build macOS
+
+permissions:
+  contents: read
+  pull-requests: read
+
+on:
+  workflow_call:
+    inputs:
+      preset:
+        required: false
+        type: string
+        default: "macos-vulkan"
+        description: "CMake preset for macOS"
+  workflow_dispatch:
+    inputs:
+      preset:
+        type: choice
+        description: "CMake preset for macOS"
+        options:
+          - macos-vulkan
+        default: macos-vulkan
+
+jobs:
+  build-mac-app:
+    name: ${{ matrix.game.id }}@${{ inputs.preset }}
+    runs-on: macos-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        game:
+          - id: generalsxzh
+            value: GeneralsMD
+            target: z_generals
+            output: GeneralsXZH
+            log_suffix: zh
+          - id: generalsx
+            value: Generals
+            target: g_generals
+            output: GeneralsX
+            log_suffix: generals
+
+    steps:
+      # GeneralsX @build GitHubCopilot 08/05/2026 Use Node 24 compatible GitHub Actions major versions to remove runner deprecation warnings.
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Cache brew packages
+        id: cache-brew
+        uses: actions/cache@v5
+        with:
+          path: ~/Library/Caches/Homebrew
+          key: brew-macos-${{ runner.os }}-${{ hashFiles('.github/workflows/build-macos.yml') }}
+          restore-keys: |
+            brew-macos-${{ runner.os }}-
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: 'ffc071e0c08432c60c9b64f00334c0227667931b'
+
+      - name: Install Dependencies
+        run: |
+          echo "Installing macOS build dependencies..."
+          
+          # Update Homebrew to ensure fresh formulas
+          brew update
+          
+          # Ensure xcode-select is properly configured (needed for clang/clang++)
+          xcode-select --install 2>/dev/null || echo "xcode-select already installed"
+          xcode-select -p || (echo "❌ Xcode command-line tools not installed"; exit 1)
+          
+          # Build tools
+          brew install cmake ninja meson pkg-config ccache
+
+          # Autotools (required by vcpkg when building packages like gperf from source)
+          brew install autoconf autoconf-archive automake libtool
+          
+          # FFmpeg (required by GameEngineDevice for video playback via pkg-config)
+          # Note: FFmpeg brings most codec/protocol dependencies, but we explicitly list
+          # discovered dylibs to ensure no optional deps are missed in bundle step
+          brew install ffmpeg \
+            libbluray gnutls librist srt libssh zeromq \
+            libvpx webp jpeg-xl dav1d opencore-amr snappy aom libvmaf lame \
+            xz aribb24 libpng
+          
+          # Freetype + Fontconfig (required by font rendering)
+          brew install freetype fontconfig
+          
+          # NOTE: GLM is intentionally NOT installed via Homebrew.
+          # It is fetched via CMake FetchContent in cmake/glm.cmake (tag 1.0.3).
+          # Installing a system GLM causes glm::glm vs glm::glm-header-only target
+          # conflicts when vcpkg's cmake wrapper calls _find_package(glm) and finds
+          # both the Homebrew-installed version and the FetchContent version.
+
+          # glslang (required by DXVK Meson build to compile GLSL shaders to SPIR-V)
+          brew install glslang
+
+          # GeneralsX @bugfix fbraz3 20/03/2026 SDL3 must be installed via Homebrew so DXVK's
+          # Meson build discovers it via pkg-config and compiles the SDL3 WSI backend.
+          # Without this, meson falls back to SDL2-only and DXVK_WSI_DRIVER=SDL3 fails at runtime.
+          brew install sdl3
+
+          # NOTE: OpenAL Soft is intentionally NOT installed via Homebrew.
+          # It is fetched via CMake FetchContent in cmake/openal.cmake (v1.24.2).
+          # Installing Homebrew openal-soft was unreliable on Apple Silicon M-series:
+          # Intel Homebrew (/usr/local) installs x86_64-only binaries which fail to
+          # link against native arm64 builds. FetchContent compiles for the native arch.
+
+          # Verify all tools are available
+          cmake --version | head -1
+          ninja --version | head -1
+          meson --version | head -1
+          pkg-config --version | head -1
+          clang --version | head -1
+          pkg-config --modversion libavcodec 2>/dev/null && echo "FFmpeg: libavcodec available" || echo "FFmpeg: libavcodec NOT found"
+          # Note: GLM cmake config check omitted intentionally — GLM comes from FetchContent, not Homebrew.
+
+          echo "Build tools installed"
+
+      - name: Cache Vulkan SDK
+        id: cache-vulkan
+        uses: actions/cache@v5
+        with:
+          path: ~/VulkanSDK
+          key: vulkan-sdk-macos-1.4.341.1
+
+      - name: Install Vulkan SDK
+        if: steps.cache-vulkan.outputs.cache-hit != 'true'
+        run: |
+          echo "Installing Vulkan SDK (required for DXVK + MoltenVK)..."
+          
+          # Strategy 1: Direct download of versioned SDK with SHA256 validation (PREFERRED)
+          VULKAN_ZIP="/tmp/vulkansdk-macos-1.4.341.1.zip"
+          VULKAN_URL="https://sdk.lunarg.com/sdk/download/1.4.341.1/mac/vulkansdk-macos-1.4.341.1.zip"
+          EXPECTED_SHA256="632cbe96c8ed6ed00c6ce25e3a7738c466134f76586e1c51f1419410d7f9042e"
+          
+          echo "Attempting versioned Vulkan SDK download (1.4.341.1)..."
+          for attempt in 1 2 3; do
+            echo "Download attempt $attempt/3..."
+            rm -f "$VULKAN_ZIP"
+            
+            if curl -L --max-time 120 --retry 2 -o "$VULKAN_ZIP" "$VULKAN_URL" 2>&1; then
+              # Validate SHA256
+              ACTUAL_SHA256=$(shasum -a 256 "$VULKAN_ZIP" | awk '{print $1}')
+              if [ "$ACTUAL_SHA256" = "$EXPECTED_SHA256" ]; then
+                echo "✅ Valid SHA256 match: $ACTUAL_SHA256"
+                break
+              else
+                echo "⚠️ SHA256 mismatch. Expected: $EXPECTED_SHA256, Got: $ACTUAL_SHA256"
+                # Check file size to diagnose
+                ZIP_SIZE=$(stat -f%z "$VULKAN_ZIP" 2>/dev/null || echo "0")
+                echo "   File size: $ZIP_SIZE bytes"
+                if [ "$ZIP_SIZE" -lt 10000000 ]; then
+                  echo "   File appears to be HTML error (too small)"
+                  head -20 "$VULKAN_ZIP"
+                fi
+              fi
+            else
+              echo "❌ Download failed"
+            fi
+            
+            if [ $attempt -lt 3 ]; then sleep 15; fi
+          done
+          
+          # Extract and install if valid ZIP
+          if [ -f "$VULKAN_ZIP" ] && [ "$(stat -f%z "$VULKAN_ZIP" 2>/dev/null || echo 0)" -gt 100000000 ]; then
+            echo "Extracting Vulkan SDK ZIP..."
+            
+            # Verify ZIP integrity before extraction
+            echo "Validating ZIP file integrity..."
+            if ! unzip -t "$VULKAN_ZIP" > /dev/null 2>&1; then
+              echo "❌ ZIP file is corrupted"
+              unzip -t "$VULKAN_ZIP" || true
+              rm -f "$VULKAN_ZIP"
+              VULKAN_SDK=""
+            else
+              echo "✅ ZIP file is valid"
+              
+              # List ZIP contents for debugging
+              echo "ZIP contents:"
+              unzip -l "$VULKAN_ZIP" | head -20
+              
+              # Extract with verbose output (not quiet)
+              mkdir -p /tmp/vulkan-extract
+              unzip -o "$VULKAN_ZIP" -d /tmp/vulkan-extract
+              
+              # List extracted contents
+              echo "Extracted structure:"
+              find /tmp/vulkan-extract -type f -o -type d | head -30
+              
+              # Strategy 1: Look for .app bundle (primary)
+              VULKAN_APP=$(find /tmp/vulkan-extract -name "*.app" -type d 2>/dev/null | head -1)
+              if [ -n "$VULKAN_APP" ]; then
+                INSTALLER="$VULKAN_APP/Contents/MacOS/vulkansdk-macOS-1.4.341.1"
+                if [ -f "$INSTALLER" ]; then
+                  echo "Found .app bundle installer: $INSTALLER"
+                  VULKAN_EXECUTABLE="$INSTALLER"
+                else
+                  echo "⚠️ .app bundle found but executable not at expected path"
+                  ls -la "$VULKAN_APP/Contents/MacOS/" || true
+                  VULKAN_EXECUTABLE=""
+                fi
+              else
+                echo "⚠️ No .app bundle found"
+              fi
+              
+              # Strategy 2: Look for direct executable if no .app found
+              if [ -z "$VULKAN_EXECUTABLE" ]; then
+                VULKAN_EXECUTABLE=$(find /tmp/vulkan-extract -name "vulkansdk-macOS-*" -type f -executable 2>/dev/null | head -1)
+                if [ -n "$VULKAN_EXECUTABLE" ]; then
+                  echo "Found direct executable: $VULKAN_EXECUTABLE"
+                else
+                  # Try non-executable variant
+                  VULKAN_EXECUTABLE=$(find /tmp/vulkan-extract -name "vulkansdk-macOS-*" -type f 2>/dev/null | head -1)
+                  if [ -n "$VULKAN_EXECUTABLE" ]; then
+                    echo "Found executable (making executable): $VULKAN_EXECUTABLE"
+                    chmod +x "$VULKAN_EXECUTABLE"
+                  fi
+                fi
+              fi
+              
+              # Execute installer if found
+              if [ -n "$VULKAN_EXECUTABLE" ] && [ -f "$VULKAN_EXECUTABLE" ]; then
+                INSTALL_TARGET="$HOME/VulkanSDK/1.4.341.1"
+                echo "Running Vulkan SDK installer to $INSTALL_TARGET..."
+                "$VULKAN_EXECUTABLE" \
+                  --root "$INSTALL_TARGET" \
+                  --accept-licenses \
+                  --default-answer \
+                  --confirm-command install
+                INSTALL_STATUS=$?
+                
+                if [ $INSTALL_STATUS -eq 0 ]; then
+                  # Normalize to platform subdirectory (CMake FindVulkan expects VULKAN_SDK/lib, not VULKAN_SDK/macOS/lib)
+                  if [ -d "$INSTALL_TARGET/macOS" ]; then
+                    VULKAN_SDK="$INSTALL_TARGET/macOS"
+                  else
+                    VULKAN_SDK="$INSTALL_TARGET"
+                  fi
+                  echo "✅ Vulkan SDK installed to $INSTALL_TARGET"
+                  echo "✅ Normalized VULKAN_SDK to: $VULKAN_SDK"
+                else
+                  echo "❌ Installer failed with status $INSTALL_STATUS"
+                  VULKAN_SDK=""
+                fi
+              else
+                echo "❌ No installer found"
+                VULKAN_SDK=""
+              fi
+              
+              rm -rf /tmp/vulkan-extract "$VULKAN_ZIP"
+            fi
+          else
+            echo "⚠️ Vulkan SDK versioned download/validation failed; trying Homebrew fallback"
+          fi
+          
+          # Strategy 2: Homebrew fallback (if versioned download failed)
+          if [ -z "$VULKAN_SDK" ] || [ ! -d "$VULKAN_SDK" ]; then
+            echo "Attempting Homebrew installation (may be older version)..."
+            if brew tap LunarG/vulkan 2>/dev/null || true; then
+              if brew install --cask vulkan-sdk 2>/dev/null; then
+                echo "✅ Vulkan SDK installed via Homebrew (note: may be older than 1.4.341.1)"
+                VULKAN_SDK="$(brew --prefix vulkan-sdk)/macOS"
+                if [ ! -d "$VULKAN_SDK" ]; then
+                  VULKAN_SDK="/usr/local/Caskroom/vulkan-sdk/latest/VulkanSDK"
+                fi
+              fi
+            fi
+          fi
+
+      - name: Set Vulkan SDK Environment Variable
+        run: |
+          VULKAN_SDK=""
+          
+          # 1. Try LunarG installer location
+          if [ -d "$HOME/VulkanSDK/1.4.341.1/macOS" ]; then
+            VULKAN_SDK="$HOME/VulkanSDK/1.4.341.1/macOS"
+          fi
+          
+          # 2. Try generic search in ~/VulkanSDK
+          if [ -z "$VULKAN_SDK" ] || [ ! -d "$VULKAN_SDK" ]; then
+            for candidate in $(find $HOME/VulkanSDK -maxdepth 2 -type d -name "macOS" 2>/dev/null); do
+              VULKAN_SDK="$candidate"
+              break
+            done
+          fi
+          
+          # 3. Try Homebrew fallback path
+          if [ -z "$VULKAN_SDK" ] || [ ! -d "$VULKAN_SDK" ]; then
+            VULKAN_SDK="$(brew --prefix vulkan-sdk 2>/dev/null)/macOS"
+            if [ ! -d "$VULKAN_SDK" ]; then
+              VULKAN_SDK="/usr/local/Caskroom/vulkan-sdk/latest/VulkanSDK"
+            fi
+          fi
+          
+          # 4. Fallback default
+          if [ -z "$VULKAN_SDK" ] || [ ! -d "$VULKAN_SDK" ]; then
+            echo "⚠️ Vulkan SDK not found in standard locations; using default path"
+            VULKAN_SDK="$HOME/VulkanSDK"
+          fi
+          
+          echo "VULKAN_SDK=$VULKAN_SDK" >> $GITHUB_ENV
+          echo "✅ Vulkan SDK path set to: $VULKAN_SDK"
+          
+          # Verify MoltenVK presence
+          if [ -f "$VULKAN_SDK/lib/libMoltenVK.dylib" ]; then
+            echo "✅ MoltenVK found at $VULKAN_SDK/lib/libMoltenVK.dylib"
+          else
+            echo "⚠️ MoltenVK not found at $VULKAN_SDK/lib/libMoltenVK.dylib"
+            echo "Checking for alternate locations..."
+            find "$(dirname $VULKAN_SDK 2>/dev/null || echo $HOME)" -name "libMoltenVK*" 2>/dev/null | head -5 || echo "(none found)"
+          fi
+
+      - name: Cache ccache
+        uses: actions/cache@v5
+        with:
+          path: ~/Library/Caches/ccache
+          key: ccache-macos-${{ matrix.game.id }}-${{ inputs.preset }}-${{ github.sha }}
+          restore-keys: |
+            ccache-macos-${{ matrix.game.id }}-${{ inputs.preset }}-
+
+      - name: Configure CMake (macOS)
+        env:
+          VULKAN_SDK: ${{ env.VULKAN_SDK }}
+          VCPKG_ROOT: ${{ env.VCPKG_ROOT }}
+          VCPKG_DEFAULT_TRIPLET: arm64-osx
+          CC: clang
+          CXX: clang++
+          CMAKE_C_COMPILER_LAUNCHER: ccache
+          CMAKE_CXX_COMPILER_LAUNCHER: ccache
+        run: |
+          mkdir -p logs
+          echo "VULKAN_SDK=$VULKAN_SDK"
+          echo "CC=$CC"
+          echo "CXX=$CXX"
+          cmake --preset ${{ inputs.preset }} 2>&1 | tee logs/configure_macos.log
+          CONFIG_STATUS=${PIPESTATUS[0]}
+          if [ $CONFIG_STATUS -eq 0 ]; then echo "✅ CMake configuration complete"; else echo "❌ CMake configuration failed"; exit 1; fi
+
+      - name: Build ${{ matrix.game.value }}
+        run: |
+          mkdir -p logs
+          NPROC=$(sysctl -n hw.ncpu)
+          echo "Building with $NPROC parallel jobs..."
+          LOG_FILE="logs/build_${{ matrix.game.log_suffix }}_macos.log"
+          cmake --build build/${{ inputs.preset }} --target ${{ matrix.game.target }} -j $NPROC 2>&1 | tee "${LOG_FILE}"
+          BUILD_STATUS=${PIPESTATUS[0]}
+          
+          if [ $BUILD_STATUS -eq 0 ]; then
+            echo "✅ Build completed successfully"
+          else
+            echo "❌ Build failed; see $LOG_FILE for details"
+            tail -100 "$LOG_FILE"
+            exit 1
+          fi
+
+      - name: Verify Build Artifacts
+        run: |
+          BINARY="build/${{ inputs.preset }}/${{ matrix.game.value }}/${{ matrix.game.output }}"
+          if [ -f "$BINARY" ]; then
+            echo "✅ Binary built: ${{ matrix.game.output }}"
+            file "$BINARY"
+            ls -lh "$BINARY"
+            
+            # Verify it's a valid Mach-O binary
+            if file "$BINARY" | grep -q "Mach-O"; then
+              echo "✅ Valid Mach-O binary"
+            else
+              echo "❌ File exists but is not a valid Mach-O binary"
+              exit 1
+            fi
+          else
+            echo "❌ Binary NOT found: $BINARY"
+            echo "Checking build directory:"
+            ls -la "build/${{ inputs.preset }}/${{ matrix.game.value }}/" 2>/dev/null || echo "Build directory not found"
+            exit 1
+          fi
+
+      - name: Bundle .app (GeneralsX macOS Distribution)
+        if: success()
+        env:
+          VULKAN_SDK: ${{ env.VULKAN_SDK }}
+        run: |
+          mkdir -p logs
+          echo "Bundling ${{ matrix.game.value }} into macOS .app package..."
+          if [ "${{ matrix.game.value }}" = "GeneralsMD" ]; then
+            echo "Executing: ./scripts/build/macos/bundle-macos-zh.sh"
+            ./scripts/build/macos/bundle-macos-zh.sh 2>&1 | tee logs/bundle_${{ matrix.game.log_suffix }}_macos.log
+          else
+            echo "Executing: ./scripts/build/macos/bundle-macos-generals.sh"
+            ./scripts/build/macos/bundle-macos-generals.sh 2>&1 | tee logs/bundle_${{ matrix.game.log_suffix }}_macos.log
+          fi
+          BUNDLE_STATUS=${PIPESTATUS[0]}
+          OUTPUT_ZIP="${{ matrix.game.output }}-macos-arm64.zip"
+          if [ $BUNDLE_STATUS -eq 0 ]; then
+            echo "✅ Bundle completed successfully"
+            if [ -f "${OUTPUT_ZIP}" ]; then
+              echo "✅ Output: ${OUTPUT_ZIP}"
+              du -sh "${OUTPUT_ZIP}"
+            else
+              echo "❌ Output zip not found: ${OUTPUT_ZIP}"
+              exit 1
+            fi
+          else
+            echo "❌ Bundle script failed; see logs for details"
+            tail -100 logs/bundle_${{ matrix.game.log_suffix }}_macos.log || true
+            exit 1
+          fi
+
+      - name: Prepare .app Artifact
+        if: success()
+        run: |
+          OUTPUT_ZIP="${{ matrix.game.output }}-macos-arm64.zip"
+          APP_NAME="${{ matrix.game.output }}.app"
+          ARTIFACT_DIR="/tmp/macos-artifact-${{ matrix.game.id }}"
+          rm -rf "${ARTIFACT_DIR}"
+          mkdir -p "${ARTIFACT_DIR}"
+
+          unzip -q "${OUTPUT_ZIP}" -d "${ARTIFACT_DIR}"
+
+          if [ ! -d "${ARTIFACT_DIR}/${APP_NAME}" ]; then
+            echo "❌ App bundle not found after extracting ${OUTPUT_ZIP}: ${ARTIFACT_DIR}/${APP_NAME}"
+            find "${ARTIFACT_DIR}" -maxdepth 2 -print
+            exit 1
+          fi
+
+          echo "✅ Prepared app bundle artifact: ${ARTIFACT_DIR}/${APP_NAME}"
+          du -sh "${ARTIFACT_DIR}/${APP_NAME}"
+
+          # GeneralsX @build fbraz3 27/03/2026 Archive .app as tar (no compression) to preserve symlinks and executable bits.
+          BUNDLE_TAR="${ARTIFACT_DIR}/${APP_NAME%.app}.tar"
+          tar -C "${ARTIFACT_DIR}" -cf "${BUNDLE_TAR}" "${APP_NAME}"
+          echo "✅ Archive ready: ${BUNDLE_TAR}"
+
+      - name: Upload Build Logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-logs-macos-${{ matrix.game.id }}
+          path: logs/
+          retention-days: 7
+
+      - name: Upload Bundle
+        if: success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-${{ matrix.game.id }}-app
+          path: /tmp/macos-artifact-${{ matrix.game.id }}/*.tar
+          retention-days: 7
+          if-no-files-found: warn

@@ -1,0 +1,197 @@
+set(WWLIB_SRC
+    always.h
+    argv.cpp
+    argv.h
+    b64pipe.cpp
+    b64pipe.h
+    b64straw.cpp
+    b64straw.h
+    base64.cpp
+    base64.h
+    #bfiofile.cpp
+    #bfiofile.h
+    binheap.h
+    bittype.h
+    bound.h
+    BSEARCH.h
+    buff.cpp
+    BUFF.h
+    bufffile.cpp
+    bufffile.h
+    CallbackHook.h
+    chunkio.cpp
+    chunkio.h
+    cpudetect.cpp
+    cpudetect.h
+    #crandom.h
+    crc.cpp
+    CRC.h
+    #crcpipe.cpp
+    #crcpipe.h
+    #crcstraw.cpp
+    #crcstraw.h
+    cstraw.cpp
+    cstraw.h
+    DbgHelpGuard.cpp
+    DbgHelpGuard.h
+    DbgHelpLoader.cpp
+    DbgHelpLoader.h
+    DbgHelpLoader_minidump.h
+    Except.cpp
+    Except.h
+    FastAllocator.cpp
+    FastAllocator.h
+    ffactory.cpp
+    ffactory.h
+    gcd_lcm.cpp
+    gcd_lcm.h
+    #global.h
+    hash.cpp
+    hash.h
+    hashcalc.h
+    HASHLIST.h
+    #hashtab.h
+    hashtemplate.h
+    #incdec.h
+    INDEX.h
+    ini.cpp
+    INI.h
+    inisup.h
+    iostruct.h
+    jshell.cpp
+    LISTNODE.h
+    #lzo.cpp
+    #lzo.h
+    #lzo1x.h
+    #lzo1x_c.cpp
+    #lzo1x_d.cpp
+    #lzoconf.h
+    #lzopipe.cpp
+    #lzopipe.h
+    #lzostraw.cpp
+    #lzostraw.h
+    #lzo_conf.h
+    #md5.cpp
+    #md5.h
+    mempool.h
+    mmsys.h
+    multilist.cpp
+    multilist.h
+    mutex.cpp
+    mutex.h
+    #noinit.h
+    notifier.h
+    nstrdup.cpp
+    nstrdup.h
+    ntree.h
+    pipe.cpp
+    PIPE.h
+    Point.h
+    ramfile.cpp
+    RAMFILE.h
+    random.cpp
+    RANDOM.h
+    rawfile.cpp
+    RAWFILE.h
+    readline.cpp
+    readline.h
+    realcrc.cpp
+    realcrc.h
+    ref_ptr.h
+    refcount.cpp
+    refcount.h
+    #regexpr.cpp
+    #regexpr.h
+    #search.h
+    sharebuf.h
+    Signaler.h
+    simplevec.h
+    SLIST.h
+    slnode.cpp
+    SLNODE.h
+    stimer.cpp
+    stimer.h
+    STLUtils.h
+    straw.cpp
+    STRAW.h
+    stringex.h
+    strtok_r.cpp
+    strtok_r.h
+    #swap.h
+    SystemAllocator.h
+    systimer.cpp
+    systimer.h
+    TARGA.cpp
+    TARGA.h
+    textfile.cpp
+    textfile.h
+    tgatodxt.cpp
+    tgatodxt.h
+    thread.cpp
+    thread.h
+    trect.h
+    trim.cpp
+    trim.h
+    uarray.h
+    vector.cpp
+    Vector.h
+    visualc.h
+    widestring.cpp
+    widestring.h
+    win.h
+    WWCommon.h
+    WWDefines.h
+    wwfile.cpp
+    WWFILE.h
+    wwstring.cpp
+    wwstring.h
+    xpipe.cpp
+    XPIPE.h
+    xstraw.cpp
+    XSTRAW.h
+)
+
+# GeneralsX @build BenderAI 13/02/2026 registry.cpp has stubs for Linux (#else at end)
+list(APPEND WWLIB_SRC
+    registry.cpp
+    registry.h
+    registryini.cpp
+    registryini.h
+)
+
+if(WIN32)
+    list(APPEND WWLIB_SRC
+        mpu.cpp
+        MPU.h
+        rcfile.cpp
+        rcfile.h
+        verchk.cpp
+        verchk.h
+        WWCOMUtil.cpp
+        WWCOMUtil.h
+    )
+endif()
+
+add_library(core_wwlib STATIC)
+set_target_properties(core_wwlib PROPERTIES OUTPUT_NAME wwlib)
+
+target_sources(core_wwlib PRIVATE ${WWLIB_SRC})
+
+target_include_directories(core_wwlib PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_precompile_headers(core_wwlib PRIVATE
+    [["Utility/CppMacros.h"]] # Must be first, to be removed when abandoning VC6
+    always.h
+    STLUtils.h
+    win.h
+    WWCommon.h
+    wwstring.h
+    [["PchCompat.h"]] # TheSuperHackers @build 08/02/2026 Platform-safe windows.h wrapper
+)
+
+target_link_libraries(core_wwlib PRIVATE
+    core_wwcommon
+    corei_always
+)

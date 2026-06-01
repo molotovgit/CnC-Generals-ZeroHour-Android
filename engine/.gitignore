@@ -1,0 +1,95 @@
+# Ignore everything starting with dot, except specific files.
+.*
+!.editorconfig
+!.gitignore
+!.gitattributes
+!.github
+!.devin
+!.gitmodules
+
+*.user
+*.ncb
+/build*
+nbproject/
+project/
+doxygen/
+*.a
+*.o
+CMakeCache.txt
+CMakeFiles
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+*.so*
+CPackConfig.cmake
+CPackSourceConfig.cmake
+*.spec
+*.ncb
+*.sdf
+*.suo
+*.sln
+*.vcxproj*
+*.vcproj
+.cproject
+.project
+*~
+!*.exe
+*.lastbuildstate
+*.unsuccessfulbuild
+*.tlog
+*.idb
+*.cd
+*.tmp
+*.bak
+thumbs.db
+/CMakeUserPresets.json
+/.cache
+.clang-format
+/Dependencies/MaxSDK/maxsdk
+/tmp/
+
+## AI assistant config (user-specific)
+/.claude/
+/CLAUDE.md
+
+## IntelliJ, CLion, etc.
+/.idea
+
+# IntelliJ-style CMake bits
+cmake-build-*/
+
+## Ninja
+.ninja_deps
+.ninja_log
+build.ninja
+
+## Python
+__pycache__/
+*.pyc
+
+## Build Logs (generated during development)
+/logs/
+GeneralsMD/logs/
+Generals/logs/
+
+# vcpkg artifacts (generated dependencies)
+/vcpkg_installed/
+
+# External reference repositories (large, don't commit)
+# references/
+
+# Release bundles
+GeneralsX-macos-*.zip
+GeneralsXZH-macos-*.zip
+GeneralsX-linux-*.tar.gz
+GeneralsXZH-linux-*.tar.gz
+
+# flatpak build files (exclude staging/build dirs but track scripts and manifests)
+.flatpak-builder/
+flatpak/staging/
+flatpak/*.flatpak
+
+#tmp and log files on root folder
+logs_*.zip
+*.log
