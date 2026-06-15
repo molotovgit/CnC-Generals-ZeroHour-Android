@@ -51,7 +51,11 @@ if(SAGE_USE_SDL3)
     # Before SDL3_image build: force PNG discovery to platform-specific libpng
     # Linux: System libpng16.so is dynamic shared library
     # macOS: Use Homebrew PNG or system framework
-    if(NOT APPLE)
+    if(ANDROID)
+        # GeneralsX @port Android — no system shared libpng on Android; use vcpkg's
+        # static libpng (PNG::PNG) and link it statically (SDL3IMAGE_DEPS_SHARED OFF below).
+        find_package(PNG REQUIRED)
+    elseif(NOT APPLE)
         # Find system shared libpng, bypassing vcpkg's static .a.
         # SDL3_image requires a shared .so but vcpkg only provides static libpng16.a.
         # NO_CMAKE_PATH + NO_CMAKE_FIND_ROOT_PATH skips all vcpkg-injected search paths,
