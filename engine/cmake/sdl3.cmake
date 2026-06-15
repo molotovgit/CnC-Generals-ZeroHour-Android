@@ -112,8 +112,6 @@ if(SAGE_USE_SDL3)
     # Note: PNG will use system libpng-dev (installed in Docker, no vcpkg conflicts)
     set(SDL3IMAGE_INSTALL ON CACHE BOOL "Install SDL3_image" FORCE)
     set(SDL3IMAGE_PNG ON CACHE BOOL "Enable PNG support (ANI cursor loading)" FORCE)
-    set(SDL3IMAGE_TIF ON CACHE BOOL "Enable TIF support" FORCE)
-    set(SDL3IMAGE_WEBP ON CACHE BOOL "Enable WebP support" FORCE)
     set(SDL3IMAGE_AVIF OFF CACHE BOOL "Disable AVIF (optional)" FORCE)
     set(SDL3IMAGE_XCUR ON CACHE BOOL "Enable X cursor support" FORCE)
     
