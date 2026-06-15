@@ -1,0 +1,16 @@
+# Normalize line endings; keep engine sources as-is to preserve upstream history.
+* text=auto
+
+*.sh        text eol=lf
+*.py        text eol=lf
+gradlew     text eol=lf
+*.bat       text eol=crlf
+
+# Binary assets — never diff or normalize.
+*.png       binary
+*.jar       binary
+*.so        binary
+*.apk       binary
+*.pak       binary
+*.big       binary
+*.bik       binary
