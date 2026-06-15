@@ -240,7 +240,7 @@ target_sources(corei_ww3d2 INTERFACE ${WW3D2_SRC})
 
 # GeneralsX @build fbraz 11/02/2026 BenderAI - Enable FreeType text rendering on Linux/macOS
 target_compile_definitions(corei_ww3d2 INTERFACE
-    $<$<PLATFORM_ID:Linux,Darwin>:SAGE_USE_FREETYPE>
+    $<$<PLATFORM_ID:Linux,Darwin,Android>:SAGE_USE_FREETYPE>
 )
 
 if (MSVC AND NOT IS_VS6_BUILD)
