@@ -22,6 +22,11 @@
         "name": "curl",
         "platform": "!windows",
         "features": ["ssl"]
+      },
+      {
+        "name": "ffmpeg",
+        "platform": "!windows",
+        "features": ["avcodec", "avformat", "swresample", "swscale"]
       }
     ]
   }
