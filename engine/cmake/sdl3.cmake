@@ -111,8 +111,6 @@ if(SAGE_USE_SDL3)
     # Configure SDL3_image build options
     # Note: PNG will use system libpng-dev (installed in Docker, no vcpkg conflicts)
     set(SDL3IMAGE_INSTALL ON CACHE BOOL "Install SDL3_image" FORCE)
-    set(SDL3IMAGE_DEPS_SHARED ON CACHE BOOL "Use system shared dependencies" FORCE)
-    set(SDL3IMAGE_JPG ON CACHE BOOL "Enable JPG support" FORCE)
     set(SDL3IMAGE_PNG ON CACHE BOOL "Enable PNG support (ANI cursor loading)" FORCE)
     set(SDL3IMAGE_TIF ON CACHE BOOL "Enable TIF support" FORCE)
     set(SDL3IMAGE_WEBP ON CACHE BOOL "Enable WebP support" FORCE)
