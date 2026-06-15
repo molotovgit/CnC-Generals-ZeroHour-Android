@@ -113,7 +113,27 @@ if(SAGE_USE_SDL3)
     set(SDL3IMAGE_INSTALL ON CACHE BOOL "Install SDL3_image" FORCE)
     set(SDL3IMAGE_PNG ON CACHE BOOL "Enable PNG support (ANI cursor loading)" FORCE)
     set(SDL3IMAGE_AVIF OFF CACHE BOOL "Disable AVIF (optional)" FORCE)
-    set(SDL3IMAGE_XCUR ON CACHE BOOL "Enable X cursor support" FORCE)
+    if(ANDROID)
+        # GeneralsX @port Android — link vcpkg static deps directly; disable formats
+        # whose libs we don't ship for arm64-android (engine only needs PNG for cursors).
+        # NOTE: SDL3_image's real option prefix is SDLIMAGE_ (not SDL3IMAGE_); the latter
+        # is silently ignored. Set both to be safe, but SDLIMAGE_* is the effective one.
+        set(SDLIMAGE_DEPS_SHARED OFF CACHE BOOL "Static deps on Android" FORCE)
+        set(SDLIMAGE_PNG_SHARED OFF CACHE BOOL "Link libpng statically on Android" FORCE)
+        set(SDLIMAGE_JPG OFF CACHE BOOL "Disable JPG on Android" FORCE)
+        set(SDLIMAGE_TIF OFF CACHE BOOL "Disable TIF on Android" FORCE)
+        set(SDLIMAGE_WEBP OFF CACHE BOOL "Disable WebP on Android" FORCE)
+        set(SDL3IMAGE_DEPS_SHARED OFF CACHE BOOL "Static deps on Android" FORCE)
+        set(SDL3IMAGE_JPG OFF CACHE BOOL "Disable JPG on Android" FORCE)
+        set(SDL3IMAGE_TIF OFF CACHE BOOL "Disable TIF on Android" FORCE)
+        set(SDL3IMAGE_WEBP OFF CACHE BOOL "Disable WebP on Android" FORCE)
+    else()
+        set(SDL3IMAGE_DEPS_SHARED ON CACHE BOOL "Use system shared dependencies" FORCE)
+        set(SDL3IMAGE_JPG ON CACHE BOOL "Enable JPG support" FORCE)
+        set(SDL3IMAGE_TIF ON CACHE BOOL "Enable TIF support" FORCE)
+        set(SDL3IMAGE_WEBP ON CACHE BOOL "Enable WebP support" FORCE)
+        set(SDL3IMAGE_XCUR ON CACHE BOOL "Enable X cursor support" FORCE)
+    endif()
     
     FetchContent_MakeAvailable(SDL3_image)
     
