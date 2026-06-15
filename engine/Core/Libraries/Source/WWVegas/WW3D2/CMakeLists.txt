@@ -267,5 +267,6 @@ target_link_libraries(corei_ww3d2 INTERFACE
     $<$<PLATFORM_ID:Android>:Freetype::Freetype>
     $<$<PLATFORM_ID:Linux>:Fontconfig::Fontconfig>
     $<$<PLATFORM_ID:Darwin>:Fontconfig::Fontconfig>
+    $<$<PLATFORM_ID:Android>:Fontconfig::Fontconfig>
     $<$<PLATFORM_ID:Darwin>:Iconv::Iconv>
 )
