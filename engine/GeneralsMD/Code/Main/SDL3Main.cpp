@@ -80,6 +80,11 @@ char** __argv = nullptr; ///< global argument vector
 // On Linux, we cast SDL_Window* to HWND type for compatibility
 HWND ApplicationHWnd = nullptr;  ///< our application window handle
 
+// @port Android: real device resolution, published for GlobalData so the game
+// renders fullscreen at the screen size instead of a letterboxed 4:3 backbuffer.
+int TheAndroidDisplayWidth = 0;
+int TheAndroidDisplayHeight = 0;
+
 // GLOBAL SDL3 WINDOW
 // GeneralsX @feature felipebraz 16/02/2026
 // SDL3 window created in main() before GameMain(), stored globally for engine access
