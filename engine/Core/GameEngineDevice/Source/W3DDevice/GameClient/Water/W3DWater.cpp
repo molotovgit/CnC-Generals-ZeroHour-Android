@@ -1737,7 +1737,7 @@ void WaterRenderObjClass::Render(RenderInfoClass & rinfo)
 			break;
 	}
 
-	if (TheGlobalData && TheGlobalData->m_drawSkyBox)
+	if (m_skyBox && TheGlobalData && TheGlobalData->m_drawSkyBox) // @port Android @bugfix guard null skybox (crashed WaterRenderObjClass::Render on map load)
 	{	//center skybox around camera
 		Vector3 pos=rinfo.Camera.Get_Position();
 		pos.Z = TheGlobalData->m_skyBoxPositionZ;
