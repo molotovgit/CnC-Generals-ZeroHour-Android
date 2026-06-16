@@ -1,4 +1,9 @@
-add_executable(z_generals WIN32)
+if(ANDROID)
+    # GeneralsX @port Android — SDLActivity loads the app as libmain.so and invokes SDL_main via JNI.
+    add_library(z_generals SHARED)
+else()
+    add_executable(z_generals WIN32)
+endif()
 
 # Use a binary name that doesn't conflict with original game.
 # GeneralsX @build BenderAI 15/02/2026 Linux branding update
