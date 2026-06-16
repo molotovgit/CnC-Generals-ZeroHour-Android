@@ -599,6 +599,22 @@ static bool s_filteredDirty = true;
 static void buildFilteredResolutions()
 {
 	s_filteredResolutions.clear();
+#if defined(__ANDROID__)
+	// @port Android: the DXVK render device does not populate a Win32-style
+	// resolution table, so WW3D::Get_Render_Device_Desc(0).Enumerate_Resolutions()
+	// dereferences an empty table and SIGSEGVs (fault 0x568) the moment the
+	// Options menu builds its resolution list. Expose just the single native
+	// display resolution (the game already renders at that size on Android).
+	{
+		int nativeW = 0, nativeH = 0; float density = 1.0f;
+		if (!DX8Wrapper::GetNativeDisplaySize(nativeW, nativeH, density) || nativeW <= 0 || nativeH <= 0) {
+			nativeW = DEFAULT_DISPLAY_WIDTH; nativeH = DEFAULT_DISPLAY_HEIGHT;
+		}
+		s_filteredResolutions.push_back({ nativeW, nativeH, DEFAULT_DISPLAY_BIT_DEPTH });
+		s_filteredDirty = false;
+		return;
+	}
+#endif
 	const RenderDeviceDescClass &devDesc = WW3D::Get_Render_Device_Desc(0);
 	const DynamicVectorClass<ResolutionDescClass> &resolutions = devDesc.Enumerate_Resolutions();
 
