@@ -132,6 +132,11 @@ int TerrainTextureClass::update(WorldHeightMap *htMap)
 				(unsigned)surface_desc.Format,
 				surface_desc.Width, surface_desc.Height,
 				htMap ? htMap->m_numBitmapTiles : -1, nonNull,
+				htMap ? htMap->m_numTextureClasses : -1, maxPosX, foundNdx,
+				sp?sp[0]:-1, sp?sp[1]:-1, sp?sp[2]:-1,
+				sp?sp[3]:-1, sp?sp[4]:-1, sp?sp[5]:-1);
+		}
+	}
 
 	Int tilePixelExtent = TILE_PIXEL_EXTENT;
 	Int tilesPerRow = surface_desc.Width/(2*TILE_PIXEL_EXTENT+TILE_OFFSET);
