@@ -154,6 +154,30 @@ namespace {
 
 struct TouchFinger { SDL_FingerID id; float sx, sy, x, y; };
 
+TouchFinger  g_tf[2];
+int          g_tfCount = 0;
+
+// deferred single-finger left button
+bool         g_leftPending = false;   // 1st finger down; left-down not yet committed
+bool         g_leftHeld    = false;   // a left-button-down was synthesized and is held
+SDL_FingerID g_leftId      = 0;
+float        g_leftSX = 0, g_leftSY = 0;
+Uint64       g_leftDownMs  = 0;
+
+// two-finger gesture
+bool         g_two = false;
+bool         g_twoMoved = false;
+float        g_lastCx = 0, g_lastCy = 0, g_lastDist = 0;
+float        g_startCx = 0, g_startCy = 0;
+Uint64       g_twoStartMs = 0;
+
+// after a 2-finger gesture begins, ignore leftover fingers for the left button
+// until ALL fingers lift (stops a stray drag-box when one finger lifts first)
+bool         g_suppressLeft = false;
+
+// on-screen ESC/menu button (top-left). Tapping it toggles the in-game pause menu.
+// KEEP THIS GEOMETRY IN SYNC WITH kMenuBtn* IN W3DInGameUI.cpp (the draw side).
+
 /**
  * Constructor: Initialize SDL3 game engine state
  */
