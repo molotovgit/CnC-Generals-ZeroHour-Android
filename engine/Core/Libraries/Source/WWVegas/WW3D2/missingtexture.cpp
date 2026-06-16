@@ -124,7 +124,13 @@ void MissingTexture::_Init()
 		for (unsigned x=0; x<missing_image_width; x++)
 		{
 			//*buffer++=missing_image_palette[*pixels++];
-			*buffer++=0x7FFF00FF;
+			// @port Android: use opaque white instead of magenta (0x7FFF00FF) for the
+			// missing-texture fallback. Terrain multi-texture stages (e.g. the stage-3
+			// lightmap/macro "TSNoiseUrb.tga", which is absent from the shipped .big
+			// archives) MODULATE this texture over the base; a magenta fallback zeroes
+			// the green channel and tints the whole terrain pink. White is the identity
+			// for a modulate and leaves genuinely-present textures unchanged.
+			*buffer++=0xFFFFFFFF;
 		}
 		buffer=(unsigned*)locked_rect.pBits;
 		buffer+=locked_rect.Pitch/sizeof(unsigned)*y;
