@@ -9,6 +9,9 @@ endif()
 # GeneralsX @build BenderAI 15/02/2026 Linux branding update
 if("${CMAKE_SYSTEM}" MATCHES "Windows")
     set_target_properties(z_generals PROPERTIES OUTPUT_NAME "generalszh${RTS_BUILD_OUTPUT_SUFFIX}")
+elseif(ANDROID)
+    # GeneralsX @port Android — SDLActivity loads "libmain.so" by default.
+    set_target_properties(z_generals PROPERTIES OUTPUT_NAME main)
 else()
     # GeneralsX @build BenderAI 15/02/2026 Linux branding update
     set_target_properties(z_generals PROPERTIES OUTPUT_NAME GeneralsXZH)
