@@ -62,6 +62,17 @@ bool localPlayerHasRadar()
 	if (!TheRadar->isRadarHidden(index) && player->hasRadar())
 		return true;
 
+#if defined(__ANDROID__)
+	// GeneralsX @feature Android: in SINGLE-PLAYER CAMPAIGN missions keep the terrain minimap
+	// available for touch navigation even without a powered radar building (mobile QoL). SKIRMISH
+	// and MULTIPLAYER intentionally keep the normal desktop radar-gating — the minimap stays blank
+	// until you build/power a radar structure, which is the expected competitive behavior.
+	// An explicit scripted hide (isRadarHidden) is still respected.
+	if (!TheRadar->isRadarHidden(index)
+		&& TheGameLogic && TheGameLogic->isInSinglePlayerGame())
+		return true;
+#endif
+
 	return false;
 }
 
