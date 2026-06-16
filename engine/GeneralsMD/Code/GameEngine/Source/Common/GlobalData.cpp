@@ -657,6 +657,19 @@ GlobalData::GlobalData()
 	m_windowed = 0;
 	m_xResolution = DEFAULT_DISPLAY_WIDTH;
 	m_yResolution = DEFAULT_DISPLAY_HEIGHT;
+#if defined(__ANDROID__)
+	// @port Android: render at the real device resolution (set by SDL3Main from
+	// the display mode) so the game fills the screen instead of being letterboxed
+	// from a 4:3 backbuffer.
+	{
+		extern int TheAndroidDisplayWidth;
+		extern int TheAndroidDisplayHeight;
+		if (TheAndroidDisplayWidth > 0 && TheAndroidDisplayHeight > 0) {
+			m_xResolution = TheAndroidDisplayWidth;
+			m_yResolution = TheAndroidDisplayHeight;
+		}
+	}
+#endif
 	m_maxShellScreens = 0;
 	m_useCloudMap = FALSE;
 	m_use3WayTerrainBlends = 1;
