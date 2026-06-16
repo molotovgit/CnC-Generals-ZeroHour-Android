@@ -58,6 +58,15 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cmath>
+// GeneralsX @feature Android touch → RTS controls: camera/view + game-mode gating
+#if defined(__ANDROID__)
+#include "GameClient/View.h"
+#include "GameLogic/GameLogic.h"
+#include "GameClient/InGameUI.h"
+#include "GameClient/Display.h"
+#include "GameClient/VideoPlayer.h"
+#endif
 
 // Extern globals for input devices (set by GameClient)
 extern Mouse *TheMouse;
