@@ -110,6 +110,16 @@ void W3DRadar::initializeTextureFormats()
 {
 	const WW3DFormat terrainFormats[] =
 	{
+#if !defined(_WIN32)
+		// GeneralsX @bugfix Android/DXVK: R8G8B8 (24-bit) is reported "supported" by the
+		// DXVK caps query, but its CPU surface fill assumes a 3-byte stride while DXVK
+		// actually stores the texture as 32-bit — so the radar terrain comes out BLACK.
+		// (This became visible once the display switched to a 10-bit swapchain, which
+		// changed the format-support results so R8G8B8 got picked instead of X8R8G8B8.)
+		// Prefer the byte-exact 32-bit formats first so 24-bit is never chosen.
+		WW3D_FORMAT_X8R8G8B8,
+		WW3D_FORMAT_A8R8G8B8,
+#endif
 		WW3D_FORMAT_R8G8B8,
 		WW3D_FORMAT_X8R8G8B8,
 		WW3D_FORMAT_R5G6B5,
