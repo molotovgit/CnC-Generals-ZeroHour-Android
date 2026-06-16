@@ -486,6 +486,7 @@ void LanLobbyMenuInit( WindowLayout *layout, void *userData )
 	fprintf(stderr, "[LAN86] LanLobbyMenuInit SetLocalIP begin %d.%d.%d.%d\n", PRINTF_IP_AS_4_INTS(IP));
 	if (TheLAN->SetLocalIP(IP) == FALSE) {
 		LANSocketErrorDetected = TRUE;
+		fprintf(stderr, "[LAN86] LanLobbyMenuInit SetLocalIP FAILED %d.%d.%d.%d\n", PRINTF_IP_AS_4_INTS(IP));
 		// GeneralsX @build GitHubCopilot 11/04/2026 Explicit failure breadcrumb for LAN socket initialization.
 		DEBUG_LOG(("LanLobbyMenuInit - SetLocalIP failed for %d.%d.%d.%d", PRINTF_IP_AS_4_INTS(IP)));
 		/* 		fprintf(stderr, "[LAN86] LanLobbyMenuInit SetLocalIP failed %d.%d.%d.%d\n", PRINTF_IP_AS_4_INTS(IP)); */
