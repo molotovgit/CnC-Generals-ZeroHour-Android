@@ -345,6 +345,30 @@ void handleFingerDown(const SDL_TouchFingerEvent &tf) {
 	if (g_tfCount < 2) {
 		g_tf[g_tfCount].id = tf.fingerID;
 		g_tf[g_tfCount].sx = px; g_tf[g_tfCount].sy = py;
+		g_tf[g_tfCount].x  = px; g_tf[g_tfCount].y  = py;
+		g_tfCount++;
+	}
+	if (g_tfCount == 1) {
+		if (firstFinger && videoPlaying() && onSkipButton(px, py)) {
+			// press landed on the SKIP button during a cutscene — arm it, no select
+			g_skipArmed = true; g_skipFingerId = tf.fingerID;
+			g_leftPending = false; g_leftHeld = false;
+		} else if (firstFinger && menuButtonActive() && onMenuButton(px, py)) {
+			// press landed on the on-screen menu button — arm it, don't start a select/drag
+			g_escArmed = true; g_escFingerId = tf.fingerID;
+			g_leftPending = false; g_leftHeld = false;
+		} else {
+			g_leftPending = true; g_leftHeld = false;
+			g_leftId = tf.fingerID; g_leftSX = px; g_leftSY = py;
+			g_leftDownMs = SDL_GetTicks();
+		}
+	} else if (g_tfCount == 2) {
+		g_escArmed = false; g_skipArmed = false;   // a 2nd finger cancels the button arm; gesture takes over
+		beginTwoFinger();
+	}
+}
+
+void handleFingerMotion(const SDL_TouchFingerEvent &tf) {
 
 /**
  * Constructor: Initialize SDL3 game engine state
