@@ -307,6 +307,15 @@ int main(int argc, char* argv[])
 					char buf[65536]; size_t n;
 					while ((n = fread(buf, 1, sizeof(buf), in)) > 0) fwrite(buf, 1, n, out);
 					fclose(in); fclose(out); copied++;
+					fprintf(stderr, "INFO: bootstrap movie %s (%ld bytes)\n", entry->d_name, (long)ss.st_size);
+				}
+				closedir(d);
+				fprintf(stderr, "INFO: Android movie bootstrap: %d file(s) copied from %s\n", copied, srcDir);
+			}
+		}
+	}
+#endif
+
 	// TheSuperHackers @build felipebraz 13/02/2026
 	// Store command line arguments in globals for CommandLine.cpp parser
 	__argc = argc;
