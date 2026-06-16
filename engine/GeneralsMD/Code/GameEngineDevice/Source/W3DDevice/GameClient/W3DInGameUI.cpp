@@ -385,6 +385,30 @@ void W3DInGameUI::reset()
 
 }
 
+#if defined(__ANDROID__)
+// GeneralsX @feature Android on-screen ESC/menu button (top-left), themed to match
+// the in-game HUD buttons. Tapping it invokes ToggleQuitMenu() — the same action as
+// the desktop ESC key. The tap hit-test lives in SDL3GameEngine.cpp's touch layer;
+// KEEP THIS GEOMETRY IN SYNC WITH kMenuBtn* THERE.
+namespace {
+	const Int kMenuBtnX = 16, kMenuBtnY = 14, kMenuBtnW = 108, kMenuBtnH = 56;
+	void drawAndroidMenuButton()
+	{
+		if (!TheDisplay)
+			return;
+		const Int x = kMenuBtnX, y = kMenuBtnY, w = kMenuBtnW, h = kMenuBtnH;
+		// dark translucent panel + gold bevel border (matches the game's tan/gold button trim)
+		TheDisplay->drawFillRect(x, y, w, h, GameMakeColor(18, 22, 28, 180));
+		TheDisplay->drawOpenRect(x, y, w, h, 2.0f, GameMakeColor(214, 184, 112, 240));
+		TheDisplay->drawOpenRect(x + 3, y + 3, w - 6, h - 6, 1.0f, GameMakeColor(120, 100, 60, 170));
+		// "menu" glyph: three stacked gold bars
+		const Int barW = 46, barH = 5;
+		const Int bx = x + (w - barW) / 2;
+		const Int cy = y + h / 2;
+		const UnsignedInt bar = GameMakeColor(230, 205, 140, 245);
+		TheDisplay->drawFillRect(bx, cy - 13, barW, barH, bar);
+		TheDisplay->drawFillRect(bx, cy - 2,  barW, barH, bar);
+		TheDisplay->drawFillRect(bx, cy + 9,  barW, barH, bar);
 //-------------------------------------------------------------------------------------------------
 /** Draw member for the W3D implementation of the game user interface */
 //-------------------------------------------------------------------------------------------------
