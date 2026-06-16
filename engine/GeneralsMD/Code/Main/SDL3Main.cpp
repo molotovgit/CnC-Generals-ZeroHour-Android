@@ -410,7 +410,7 @@ int main(int argc, char* argv[])
 #endif
 		TheSDL3Window = SDL_CreateWindow(
 			"Command & Conquer Generals: Zero Hour",
-			1024, 768,  // Default resolution
+			windowW, windowH,
 			windowFlags
 		);
 
