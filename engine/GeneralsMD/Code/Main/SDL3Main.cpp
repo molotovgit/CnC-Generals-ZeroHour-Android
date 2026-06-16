@@ -259,6 +259,30 @@ int main(int argc, char* argv[])
 {
 	int exitcode = 1;
 
+#if defined(__ANDROID__)
+	// GeneralsX @port Android — native stdout/stderr are sent to /dev/null on Android.
+	// Redirect them to an app-private log file so the boot sequence is retrievable via
+	// `adb shell run-as org.generalsx.zerohour cat /data/data/org.generalsx.zerohour/ccg_log.txt`.
+	{
+		FILE* androidLog = freopen("/data/user/0/org.generalsx.zerohour/ccg_log.txt", "w", stderr);
+		if (androidLog != nullptr) {
+			setvbuf(stderr, nullptr, _IONBF, 0);
+			dup2(fileno(stderr), fileno(stdout));
+		}
+	}
+	// GeneralsX @port Android — an app's working directory is "/" (read-only). The engine creates
+	// its data folders via relative paths (e.g. "./GeneralsX"), so chdir into app-private storage.
+	mkdir("/data/user/0/org.generalsx.zerohour/files", 0755);
+	if (chdir("/data/user/0/org.generalsx.zerohour/files") != 0) {
+		fprintf(stderr, "WARNING: Android chdir to app storage failed\n");
+	}
+	// GeneralsX @port Android — cutscene/movie bootstrap. adb cannot write the app's
+	// internal asset dir (SELinux blocks it on non-rooted builds), but the app process
+	// CAN read its own external dir. So any .bik pushed via `adb push` to
+	// <external>/Data/Movies/ is copied into internal Data/Movies/ here on launch
+	// (only when missing or a different size), which the engine then loads normally.
+	{
+		const char* ext = SDL_GetAndroidExternalStoragePath();
 	// TheSuperHackers @build felipebraz 13/02/2026
 	// Store command line arguments in globals for CommandLine.cpp parser
 	__argc = argc;
