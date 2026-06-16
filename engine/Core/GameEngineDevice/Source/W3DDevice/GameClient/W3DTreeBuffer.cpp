@@ -1196,7 +1196,7 @@ void W3DTreeBuffer::unitMoved(Object *unit)
 						toppleVector.x -= unit->getPosition()->x;
 						toppleVector.y -= unit->getPosition()->y;
 						applyTopplingForce(m_trees+treeNdx, &toppleVector, 0, W3D_TOPPLE_OPTIONS_NONE);
-					} else if (m_treeTypes[m_trees[treeNdx].treeType].m_data->m_framesToMoveOutward>1) {
+					} else if (m_treeTypes[m_trees[treeNdx].treeType].m_data && m_treeTypes[m_trees[treeNdx].treeType].m_data->m_framesToMoveOutward>1) { // @port Android @bugfix null tree m_data guard
 						pushAsideTree(m_trees[treeNdx].drawableID, &pos, unit->getUnitDirectionVector2D(), unit->getID());
 					}
 				}
