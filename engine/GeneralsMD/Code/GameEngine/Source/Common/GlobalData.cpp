@@ -1043,6 +1043,13 @@ GlobalData::GlobalData()
 	m_shellMapName.set("Maps\\ShellMap1\\ShellMap1.map");
 	m_shellMapOn =TRUE;
 	m_playIntro = TRUE;
+#if defined(__ANDROID__)
+	// @port Android: skip only the intro movies (FFmpeg video path). The live 3D
+	// shell map and full gameplay now run — the heap-corruption crash it used to
+	// trigger was fixed (16-bit sorting-VB overflow in SortingRendererClass, see
+	// sortingrenderer.cpp Insert_To_Sorting_Pool).
+	m_playIntro = FALSE;
+#endif
 	m_playSizzle = TRUE;
 	m_afterIntro = FALSE;
 	m_allowExitOutOfMovies = FALSE;
