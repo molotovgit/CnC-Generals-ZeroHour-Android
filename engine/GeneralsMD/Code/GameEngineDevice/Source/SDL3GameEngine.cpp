@@ -417,6 +417,30 @@ void handleFingerUp(const SDL_TouchFingerEvent &tf) {
 	float w, h; winSize(w, h);
 	float px = tf.x * w, py = tf.y * h;
 
+	// SKIP button: fire only if the finger lifts while still over it and a video is playing
+	if (g_skipArmed && tf.fingerID == g_skipFingerId) {
+		bool fire = onSkipButton(px, py) && videoPlaying();
+		g_skipArmed = false;
+		dropFinger(idx);
+		if (g_tfCount == 0) { g_suppressLeft = false; g_leftPending = false; g_leftHeld = false; }
+		if (fire) { synthKey(SDL_SCANCODE_ESCAPE, true); synthKey(SDL_SCANCODE_ESCAPE, false); }
+		return;
+	}
+
+	// on-screen menu button: fire only if the finger lifts while still over the button
+	if (g_escArmed && tf.fingerID == g_escFingerId) {
+		bool fire = onMenuButton(px, py) && menuButtonActive();
+		g_escArmed = false;
+		dropFinger(idx);
+		if (g_tfCount == 0) { g_suppressLeft = false; g_leftPending = false; g_leftHeld = false; }
+		if (fire) ToggleQuitMenu();
+		return;
+	}
+
+	if (g_two) {
+		bool wasTap = (!g_twoMoved) && (SDL_GetTicks() - g_twoStartMs <= TWO_TAP_MAX_MS);
+		g_two = false;
+		if (wasTap && inLiveGame()) rightClick(g_startCx, g_startCy);   // move / attack order
 
 /**
  * Constructor: Initialize SDL3 game engine state
