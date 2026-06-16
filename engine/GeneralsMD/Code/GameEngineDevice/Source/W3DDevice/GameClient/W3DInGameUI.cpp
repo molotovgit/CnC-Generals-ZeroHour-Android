@@ -492,6 +492,15 @@ void W3DInGameUI::draw()
 	}
 #endif
 
+#if defined(__ANDROID__)
+	// Drawn last so it sits on top of the HUD/video. During a cutscene show the SKIP button
+	// (top-right); otherwise, while actually playing, show the ESC/menu button (top-left).
+	if (TheVideoPlayer && TheVideoPlayer->firstStream())
+		drawAndroidSkipButton();
+	else if (TheGameLogic && TheGameLogic->isInGame() && !TheGameLogic->isInShellGame() && !isQuitMenuVisible())
+		drawAndroidMenuButton();
+#endif
+
 	TheDisplay->endBatch();
 
 }
