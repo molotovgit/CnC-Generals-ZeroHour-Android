@@ -340,6 +340,20 @@ void SortingRendererClass::Insert_To_Sorted_List(SortingNodeStruct *state)
 
 void SortingRendererClass::Insert_To_Sorting_Pool(SortingNodeStruct* state)
 {
+	// @port Android @bugfix The sorting dynamic vertex/index buffers and the
+	// sorted triangle indices (ShortVectorIStruct) are all 16-bit, so a single
+	// Flush_Sorting_Pool cannot hold more than 65535 vertices / 65535 indices.
+	// Exceeding that truncated the DX8 dynamic VB allocation (unsigned short)
+	// while the fill loop still memcpy'd the full 32-bit vertex total, running
+	// off the end of the DXVK-mapped buffer and corrupting the allocator heap
+	// (SIGSEGV 0x2000000001 after 30-70s of particle/smudge rendering). Flush
+	// early so every batch stays within the 16-bit limits.
+	if (overlapping_node_count > 0 &&
+	    (overlapping_vertex_count + state->vertex_count > 65535u ||
+	     (overlapping_polygon_count + state->polygon_count) * 3u > 65535u)) {
+		Flush_Sorting_Pool();
+	}
+
 	if (overlapping_node_count>=MAX_OVERLAPPING_NODES) {
 		Release_Refs(state);
 		delete state;
