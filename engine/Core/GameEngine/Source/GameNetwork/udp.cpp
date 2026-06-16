@@ -169,7 +169,7 @@ Int UDP::Bind(UnsignedInt IP,UnsignedShort Port)
     portHostOrder, m_lastError));
   fprintf(stderr, "[LAN86] UDP::Bind socket failed %d.%d.%d.%d:%d err=%d\n",
     (ipHostOrder >> 24) & 0xFF, (ipHostOrder >> 16) & 0xFF, (ipHostOrder >> 8) & 0xFF, ipHostOrder & 0xFF,
-    portHostOrder, m_lastError); */
+    portHostOrder, m_lastError);
     return(UNKNOWN);
   }
 
