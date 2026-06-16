@@ -297,6 +297,30 @@ void drainUps() {
 			// like a real held finger. Without this the WindowManager never sees
 			// the press sustained and a pushbutton's up won't fire its callback.
 			synthMotion(g_ups[i].x, g_ups[i].y);
+		}
+	}
+}
+void synthLeftDown(float x, float y) {
+	synthMotion(x, y);
+	synthButton(SDL_BUTTON_LEFT, true, x, y);
+	g_leftHeld = true;
+	g_leftDownSynthMs = SDL_GetTicks();
+}
+// Release a held left button, guaranteeing >= CLICK_HOLD_MS of total press so
+// the GUI registers the click. Long presses/drags release immediately.
+void releaseLeftHeld(float x, float y) {
+	Uint64 due = g_leftDownSynthMs + CLICK_HOLD_MS;
+	if (SDL_GetTicks() >= due) synthButton(SDL_BUTTON_LEFT, false, x, y);
+	else                       queueUpAt(SDL_BUTTON_LEFT, x, y, due);
+	g_leftHeld = false;
+}
+inline void rightClick(float x, float y) {
+	synthMotion(x, y);
+	synthButton(SDL_BUTTON_RIGHT, true, x, y);
+	queueUpAt(SDL_BUTTON_RIGHT, x, y, SDL_GetTicks() + CLICK_HOLD_MS);
+}
+
+int findFinger(SDL_FingerID id) { for (int i = 0; i < g_tfCount; ++i) if (g_tf[i].id == id) return i; return -1; }
 
 /**
  * Constructor: Initialize SDL3 game engine state
