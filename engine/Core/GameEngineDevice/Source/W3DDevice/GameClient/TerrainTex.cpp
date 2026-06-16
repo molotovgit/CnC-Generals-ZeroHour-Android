@@ -109,6 +109,30 @@ int TerrainTextureClass::update(WorldHeightMap *htMap)
 
 	DX8_ErrorCode(surface_level->LockRect(&locked_rect, nullptr, 0));
 
+	// @port Android diagnostic: log the atlas surface format so we can tell if
+	// DXVK/Mali substituted A1R5G5B5 (which would skip the fill -> magenta terrain).
+	{
+		static bool s_loggedTerrainFmt = false;
+		if (!s_loggedTerrainFmt) {
+			s_loggedTerrainFmt = true;
+			// Count non-null tiles and the max assigned position, plus a real tile's pixels.
+			int nonNull = 0, maxPosX = -1, foundNdx = -1; unsigned char *sp = nullptr;
+			if (htMap) {
+				for (int t = 0; t < htMap->m_numBitmapTiles; ++t) {
+					TileData *pt = htMap->getSourceTile(t);
+					if (!pt) continue;
+					++nonNull;
+					if (pt->m_tileLocationInTexture.x > maxPosX) maxPosX = pt->m_tileLocationInTexture.x;
+					if (foundNdx < 0 && pt->m_tileLocationInTexture.x > 0) {
+						foundNdx = t; sp = pt->getRGBDataForWidth(TILE_PIXEL_EXTENT);
+					}
+				}
+			}
+			fprintf(stderr, "INFO: TerrainTex fmt=0x%x w=%u h=%u tiles=%d nonNull=%d texClasses=%d maxPosX=%d tile#%d rgb=[%d,%d,%d %d,%d,%d]\n",
+				(unsigned)surface_desc.Format,
+				surface_desc.Width, surface_desc.Height,
+				htMap ? htMap->m_numBitmapTiles : -1, nonNull,
+
 	Int tilePixelExtent = TILE_PIXEL_EXTENT;
 	Int tilesPerRow = surface_desc.Width/(2*TILE_PIXEL_EXTENT+TILE_OFFSET);
 	tilesPerRow *= 2;
