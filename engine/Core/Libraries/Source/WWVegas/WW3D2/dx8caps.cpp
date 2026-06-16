@@ -716,6 +716,7 @@ void DX8Caps::Check_Texture_Format_Support(WW3DFormat display_format,const D3DCA
 		}
 		return;
 	}
+#endif
 	D3DFORMAT d3d_display_format=WW3DFormat_To_D3DFormat(display_format);
 	for (unsigned i=0;i<WW3D_FORMAT_COUNT;++i) {
 		if (i==WW3D_FORMAT_UNKNOWN) {
