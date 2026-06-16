@@ -1009,6 +1009,17 @@ void WorldHeightMap::readTexClass(TXTextureClass *texClass, TileData **tileData)
 		theFile = TheFileSystem->openFile( texturePath, File::READ|File::BINARY);
 	}
 
+	// @port Android diagnostic: log terrain tile TGA resolution (first few classes).
+	{
+		static int s_texClassLogCount = 0;
+		if (s_texClassLogCount < 6) {
+			++s_texClassLogCount;
+			fprintf(stderr, "INFO: readTexClass name='%s' path='%s' file=%s\n",
+				texClass->name.str(), texturePath[0] ? texturePath : "(none)",
+				theFile ? "OPEN" : "NULL");
+		}
+	}
+
 	if (theFile != nullptr) {
 		GDIFileStream theStream(theFile);
 		InputStream *pStr = &theStream;
