@@ -545,6 +545,15 @@ void SDL3GameEngine::init(void)
 	m_IsInitialized = true;
 	m_IsActive = true;
 
+#if defined(__ANDROID__)
+	// GeneralsX @feature Android touch → RTS controls: take full control of touch.
+	// Disable SDL's automatic single-finger→mouse synthesis so we can distinguish
+	// 1-finger (select) from 2-finger (pan / zoom / command) gestures ourselves.
+	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+	SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
+	fprintf(stderr, "INFO: Android touch controls enabled (2-finger pan/zoom, 2-finger tap = command)\n");
+#endif
+
 	fprintf(stderr, "INFO: SDL3GameEngine using pre-initialized window\n");
 
 	// Call parent init to initialize game subsystems
