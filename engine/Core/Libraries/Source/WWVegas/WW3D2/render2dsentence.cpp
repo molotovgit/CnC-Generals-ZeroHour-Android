@@ -1709,6 +1709,7 @@ FontCharsClass::Locate_Font_FontConfig (const char *font_name)
 	FcConfigDestroy( config );
 
 	return font_path;
+#endif
 }
 
 
