@@ -707,6 +707,20 @@ void SDL3GameEngine::pollSDL3Events(void)
 				handleWindowEvent(event.window);
 				break;
 
+#if defined(__ANDROID__)
+			// GeneralsX @feature Android touch → RTS controls
+			case SDL_EVENT_FINGER_DOWN:
+				handleFingerDown(event.tfinger);
+				break;
+			case SDL_EVENT_FINGER_MOTION:
+				handleFingerMotion(event.tfinger);
+				break;
+			case SDL_EVENT_FINGER_UP:
+			case SDL_EVENT_FINGER_CANCELED:
+				handleFingerUp(event.tfinger);
+				break;
+#endif
+
 			default:
 				// Ignore other events for now
 				break;
