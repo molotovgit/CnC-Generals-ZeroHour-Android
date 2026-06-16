@@ -427,8 +427,8 @@ void LanLobbyMenuInit( WindowLayout *layout, void *userData )
 
 	for (EnumeratedIP *candidate = IPlist; candidate != nullptr; candidate = candidate->getNext())
 	{
-		/* 		fprintf(stderr, "[LAN86] LanLobbyMenuInit enumerated candidate %d.%d.%d.%d\n",
-			PRINTF_IP_AS_4_INTS(candidate->getIP())); */
+		fprintf(stderr, "[LAN86] LanLobbyMenuInit enumerated candidate %d.%d.%d.%d\n",
+			PRINTF_IP_AS_4_INTS(candidate->getIP()));
 		if (candidate->getIP() == IP)
 		{
 			foundPreferredIP = TRUE;
