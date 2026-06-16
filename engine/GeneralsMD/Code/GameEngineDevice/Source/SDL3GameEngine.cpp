@@ -249,6 +249,30 @@ void synthButton(Uint8 button, bool down, float x, float y) {
 	if (!TheMouse) return;
 	SDL3Mouse *m = dynamic_cast<SDL3Mouse*>(TheMouse); if (!m) return;
 	SDL_Event e; memset(&e, 0, sizeof(e));
+	e.type = down ? SDL_EVENT_MOUSE_BUTTON_DOWN : SDL_EVENT_MOUSE_BUTTON_UP;
+	e.button.timestamp = SDL_GetTicksNS();
+	e.button.button = button;
+	e.button.down = down;
+	e.button.clicks = 1;
+	e.button.x = x; e.button.y = y;
+	m->addSDLEvent(&e);
+}
+// Feed a synthetic key press through the same buffer as a physical key. Used for the
+// on-screen SKIP button: the movie loops poll TheKeyboard for an unused KEY_ESC down.
+void synthKey(SDL_Scancode sc, bool down) {
+	if (!TheKeyboard) return;
+	SDL3Keyboard *kb = dynamic_cast<SDL3Keyboard*>(TheKeyboard); if (!kb) return;
+	SDL_Event e; memset(&e, 0, sizeof(e));
+	e.type = down ? SDL_EVENT_KEY_DOWN : SDL_EVENT_KEY_UP;   // union: also sets e.key.type
+	e.key.timestamp = SDL_GetTicksNS();
+	e.key.scancode = sc;
+	e.key.down = down;
+	e.key.repeat = false;
+	kb->addSDLEvent(&e);
+}
+// A synthesized "click" must look like a real tap: the button must stay DOWN
+// for a while before the UP, or a latching GUI widget arms on the down and its
+// up lands in the same client update, so the callback never fires (the button
 
 /**
  * Constructor: Initialize SDL3 game engine state
