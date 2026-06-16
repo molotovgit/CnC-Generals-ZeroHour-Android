@@ -321,6 +321,30 @@ inline void rightClick(float x, float y) {
 }
 
 int findFinger(SDL_FingerID id) { for (int i = 0; i < g_tfCount; ++i) if (g_tf[i].id == id) return i; return -1; }
+void dropFinger(int idx) { if (idx < 0) return; for (int i = idx; i < g_tfCount - 1; ++i) g_tf[i] = g_tf[i+1]; if (g_tfCount) g_tfCount--; }
+
+void beginTwoFinger() {
+	// g_tf[0] is the original finger; release its held left button if any.
+	if (g_leftHeld) { synthButton(SDL_BUTTON_LEFT, false, g_tf[0].x, g_tf[0].y); g_leftHeld = false; }
+	g_leftPending  = false;
+	g_two          = true;
+	g_twoMoved     = false;
+	g_suppressLeft = true;
+	g_startCx = (g_tf[0].x + g_tf[1].x) * 0.5f;
+	g_startCy = (g_tf[0].y + g_tf[1].y) * 0.5f;
+	g_lastCx  = g_startCx; g_lastCy = g_startCy;
+	float dx = g_tf[0].x - g_tf[1].x, dy = g_tf[0].y - g_tf[1].y;
+	g_lastDist   = sqrtf(dx*dx + dy*dy);
+	g_twoStartMs = SDL_GetTicks();
+}
+
+void handleFingerDown(const SDL_TouchFingerEvent &tf) {
+	float w, h; winSize(w, h);
+	float px = tf.x * w, py = tf.y * h;
+	bool firstFinger = (g_tfCount == 0);
+	if (g_tfCount < 2) {
+		g_tf[g_tfCount].id = tf.fingerID;
+		g_tf[g_tfCount].sx = px; g_tf[g_tfCount].sy = py;
 
 /**
  * Constructor: Initialize SDL3 game engine state
