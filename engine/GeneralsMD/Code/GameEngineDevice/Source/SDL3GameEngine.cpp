@@ -369,6 +369,30 @@ void handleFingerDown(const SDL_TouchFingerEvent &tf) {
 }
 
 void handleFingerMotion(const SDL_TouchFingerEvent &tf) {
+	int idx = findFinger(tf.fingerID);
+	if (idx < 0) return;
+	float w, h; winSize(w, h);
+	float px = tf.x * w, py = tf.y * h;
+	g_tf[idx].x = px; g_tf[idx].y = py;
+
+	if (g_two && g_tfCount == 2) {
+		float cx = (g_tf[0].x + g_tf[1].x) * 0.5f;
+		float cy = (g_tf[0].y + g_tf[1].y) * 0.5f;
+		float dx = g_tf[0].x - g_tf[1].x, dy = g_tf[0].y - g_tf[1].y;
+		float dist = sqrtf(dx*dx + dy*dy);
+		float mdx = cx - g_startCx, mdy = cy - g_startCy;
+		if (sqrtf(mdx*mdx + mdy*mdy) > MOVE_THRESH_PX || fabsf(dist - g_lastDist) > MOVE_THRESH_PX)
+			g_twoMoved = true;
+		if (inLiveGame()) {
+			const float sens = panSensitivity();   // Options > Scroll Speed slider (persisted)
+			Coord2D off;
+			off.x = -(cx - g_lastCx) * PAN_K * sens;   // grab-world pan: terrain follows the fingers
+			off.y = -(cy - g_lastCy) * PAN_K * sens;
+			if (off.x != 0.0f || off.y != 0.0f) TheTacticalView->userScrollBy(&off);
+			float zoomH = (g_lastDist - dist) * PINCH_ZOOM_K * sens;   // spread fingers -> zoom in (scales with slider)
+			if (zoomH != 0.0f) TheTacticalView->userZoom(zoomH);
+		}
+		g_lastCx = cx; g_lastCy = cy; g_lastDist = dist;
 
 /**
  * Constructor: Initialize SDL3 game engine state
