@@ -273,6 +273,30 @@ void synthKey(SDL_Scancode sc, bool down) {
 // A synthesized "click" must look like a real tap: the button must stay DOWN
 // for a while before the UP, or a latching GUI widget arms on the down and its
 // up lands in the same client update, so the callback never fires (the button
+// sticks "selected"). Empirically the shell menu needs ~150ms of press. A real
+// finger tap is only ~100ms and our 45ms commit-defer eats into that, so we
+// GUARANTEE a minimum press by deferring the up through this queue whenever it
+// would otherwise come too soon after the down.
+struct PendingUp { Uint8 button; float x, y; Uint64 dueMs; bool active; };
+PendingUp    g_ups[8] = {};
+Uint64       g_leftDownSynthMs = 0;    // wall-clock of the last synthesized left-down
+const Uint64 CLICK_HOLD_MS = 150;      // minimum synthesized press duration
+
+void queueUpAt(Uint8 button, float x, float y, Uint64 dueMs) {
+	for (int i = 0; i < 8; ++i) if (!g_ups[i].active) { g_ups[i] = { button, x, y, dueMs, true }; return; }
+	synthButton(button, false, x, y);   // queue full (unexpected): release immediately
+}
+void drainUps() {
+	Uint64 now = SDL_GetTicks();
+	for (int i = 0; i < 8; ++i) if (g_ups[i].active) {
+		if (now >= g_ups[i].dueMs) {
+			synthButton(g_ups[i].button, false, g_ups[i].x, g_ups[i].y);
+			g_ups[i].active = false;
+		} else {
+			// Keep the synthesized press "alive" with a motion every frame, just
+			// like a real held finger. Without this the WindowManager never sees
+			// the press sustained and a pushbutton's up won't fire its callback.
+			synthMotion(g_ups[i].x, g_ups[i].y);
 
 /**
  * Constructor: Initialize SDL3 game engine state
