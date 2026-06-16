@@ -1700,9 +1700,10 @@ Type scanType(std::string_view token)
 	{
 		const auto [ptr, ec] = std::from_chars(token.data(), token.data() + token.size(), result);
 
-	if (ec != std::errc{})
-	{
-		throw INI_INVALID_DATA;
+		if (ec != std::errc{})
+		{
+			throw INI_INVALID_DATA;
+		}
 	}
 
 	return static_cast<Type>(result);
