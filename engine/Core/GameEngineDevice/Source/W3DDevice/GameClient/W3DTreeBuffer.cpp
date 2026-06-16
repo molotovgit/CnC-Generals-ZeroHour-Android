@@ -1189,7 +1189,7 @@ void W3DTreeBuffer::unitMoved(Object *unit)
 				delta.sub(&pos);
 				if (radius*radius>delta.lengthSqr()) {
 					bool canTopple = unit->getCrusherLevel() > 1;
-					if (canTopple && m_treeTypes[m_trees[treeNdx].treeType].m_data->m_doTopple) {
+					if (canTopple && m_treeTypes[m_trees[treeNdx].treeType].m_data && m_treeTypes[m_trees[treeNdx].treeType].m_data->m_doTopple) { // @port Android @bugfix null tree m_data guard
 						// Give a vector with direction to thing.
 						Coord3D toppleVector;
 						toppleVector.set(m_trees[treeNdx].location.X, m_trees[treeNdx].location.Y, 0);
