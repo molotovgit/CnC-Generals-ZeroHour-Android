@@ -409,6 +409,30 @@ namespace {
 		TheDisplay->drawFillRect(bx, cy - 13, barW, barH, bar);
 		TheDisplay->drawFillRect(bx, cy - 2,  barW, barH, bar);
 		TheDisplay->drawFillRect(bx, cy + 9,  barW, barH, bar);
+	}
+
+	// On-screen SKIP button (top-right), shown during any video/cutscene. Tap → ESC (skip),
+	// hit-tested in SDL3GameEngine.cpp. KEEP GEOMETRY IN SYNC WITH SKIP_BTN_* THERE
+	// (right-anchored: W - 20 - 150, y 18, 150x54). Drawn here (not W3DDisplay) because the
+	// loadscreen render path calls TheInGameUI->draw() then early-outs before the display's
+	// end-of-frame code, so this is the one draw hook that runs during a mission-intro movie.
+	void drawAndroidSkipButton()
+	{
+		if (!TheDisplay)
+			return;
+		const Int bw = 150, bh = 54, bx = TheDisplay->getWidth() - 20 - bw, by = 18;
+		TheDisplay->drawFillRect(bx, by, bw, bh, GameMakeColor(18, 22, 28, 190));
+		TheDisplay->drawOpenRect(bx, by, bw, bh, 2.0f, GameMakeColor(214, 184, 112, 240));
+		const UnsignedInt g = GameMakeColor(230, 205, 140, 245);
+		const Int cy = by + bh / 2, th = 12, tw = 13;
+		const Int tipA = bx + bw / 2 - 2, tipB = tipA + 18;   // two ">>" chevrons = fast-forward/skip
+		TheDisplay->drawLine(tipA - tw, cy - th, tipA, cy, 4.0f, g);
+		TheDisplay->drawLine(tipA, cy, tipA - tw, cy + th, 4.0f, g);
+		TheDisplay->drawLine(tipB - tw, cy - th, tipB, cy, 4.0f, g);
+		TheDisplay->drawLine(tipB, cy, tipB - tw, cy + th, 4.0f, g);
+	}
+}
+#endif // __ANDROID__
 //-------------------------------------------------------------------------------------------------
 /** Draw member for the W3D implementation of the game user interface */
 //-------------------------------------------------------------------------------------------------
