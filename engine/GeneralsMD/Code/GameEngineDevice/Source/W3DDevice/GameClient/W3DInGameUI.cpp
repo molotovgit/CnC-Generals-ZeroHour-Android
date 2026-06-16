@@ -41,6 +41,9 @@
 #include "GameClient/GameWindowManager.h"
 #include "GameClient/GadgetSlider.h"
 #include "GameClient/ControlBar.h"
+#if defined(__ANDROID__)
+#include "GameClient/VideoPlayer.h"   // TheVideoPlayer->firstStream() for the Skip button
+#endif
 #include "W3DDevice/GameClient/W3DAssetManager.h"
 #include "W3DDevice/GameClient/W3DGUICallbacks.h"
 #include "W3DDevice/GameClient/W3DInGameUI.h"
