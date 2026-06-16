@@ -996,6 +996,7 @@ void WorldHeightMap::readTexClass(TXTextureClass *texClass, TileData **tileData)
 	// get the file from the description in TheTerrainTypes
 	TerrainType *terrain = TheTerrainTypes->findTerrain( texClass->name );
 	char texturePath[ _MAX_PATH ];
+	texturePath[0] = 0;
 	if (terrain==nullptr)
 	{
 #ifdef LOAD_TEST_ASSETS
