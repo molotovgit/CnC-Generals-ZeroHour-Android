@@ -269,4 +269,5 @@ target_link_libraries(corei_ww3d2 INTERFACE
     $<$<PLATFORM_ID:Darwin>:Fontconfig::Fontconfig>
     $<$<PLATFORM_ID:Android>:Fontconfig::Fontconfig>
     $<$<PLATFORM_ID:Darwin>:Iconv::Iconv>
+    $<$<PLATFORM_ID:Android>:Iconv::Iconv>
 )
