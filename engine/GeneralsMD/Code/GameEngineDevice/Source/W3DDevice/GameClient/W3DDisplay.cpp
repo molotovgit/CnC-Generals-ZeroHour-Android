@@ -998,6 +998,21 @@ void W3DDisplay::init()
 			{
 			case 0:
 			{
+#if defined(__ANDROID__)
+				// @port Android: render at the real device resolution so the game
+				// fills the whole screen instead of being letterboxed into a 4:3
+				// pillarbox. The display size is published by SDL3Main and is
+				// guaranteed to be set by the time W3DDisplay::init() runs (which is
+				// well after the SDL window is created). Setting m_xResolution here
+				// keeps the 3D backbuffer, the 2D UI and the mouse all in agreement.
+				extern int TheAndroidDisplayWidth;
+				extern int TheAndroidDisplayHeight;
+				if (TheAndroidDisplayWidth > 0 && TheAndroidDisplayHeight > 0)
+				{
+					TheWritableGlobalData->m_xResolution = TheAndroidDisplayWidth;
+					TheWritableGlobalData->m_yResolution = TheAndroidDisplayHeight;
+				}
+#endif
 				// set our default width and height and bit depth
 				setWidth( TheGlobalData->m_xResolution );
 				setHeight( TheGlobalData->m_yResolution );
