@@ -201,6 +201,30 @@ inline void winSize(float &w, float &h) {
 }
 
 inline bool inLiveGame() {
+	return TheTacticalView && TheGameLogic && TheGameLogic->isInGame() && !TheGameLogic->isInShellGame();
+}
+
+// A video/cutscene is on screen (either the display's own movie or any open stream).
+inline bool videoPlaying() {
+	return (TheVideoPlayer && TheVideoPlayer->firstStream() != NULL)
+	    || (TheDisplay && TheDisplay->isMoviePlaying());
+}
+// The menu button is live only while playing, while the pause menu is NOT already up, and
+// NOT during a cutscene (then the Skip button takes over). Matches W3DInGameUI.cpp's draw gate.
+inline bool menuButtonActive() {
+	return inLiveGame() && (!TheInGameUI || !TheInGameUI->isQuitMenuVisible()) && !videoPlaying();
+}
+inline bool onMenuButton(float px, float py) {
+	return px >= MENU_BTN_X && px < MENU_BTN_X + MENU_BTN_W
+	    && py >= MENU_BTN_Y && py < MENU_BTN_Y + MENU_BTN_H;
+}
+inline bool onSkipButton(float px, float py) {
+	float w, h; winSize(w, h);
+	float bx = w - SKIP_BTN_MX - SKIP_BTN_W;   // top-right, right-anchored (matches draw)
+	return px >= bx && px < bx + SKIP_BTN_W && py >= SKIP_BTN_Y && py < SKIP_BTN_Y + SKIP_BTN_H;
+}
+
+// Finger-drag/zoom camera sensitivity, driven by the Options > Scroll Speed slider,
 
 /**
  * Constructor: Initialize SDL3 game engine state
