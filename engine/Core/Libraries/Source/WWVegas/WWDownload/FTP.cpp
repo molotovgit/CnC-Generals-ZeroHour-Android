@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #if !defined(__ANDROID__)  // GeneralsX @port Android — <sys/timeb.h> absent in bionic (and unused here)
 #include <sys/timeb.h>
+#endif
 #include <stdlib.h>
 #ifdef _WIN32
 #include <process.h>
