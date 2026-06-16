@@ -177,6 +177,30 @@ bool         g_suppressLeft = false;
 
 // on-screen ESC/menu button (top-left). Tapping it toggles the in-game pause menu.
 // KEEP THIS GEOMETRY IN SYNC WITH kMenuBtn* IN W3DInGameUI.cpp (the draw side).
+const float  MENU_BTN_X = 16, MENU_BTN_Y = 14, MENU_BTN_W = 108, MENU_BTN_H = 56;
+bool         g_escArmed = false;      // first finger came down on the menu button
+SDL_FingerID g_escFingerId = 0;
+
+// on-screen SKIP button (top-right), shown only during a video/cutscene. Tapping it
+// synthesizes ESC → the movie loops skip. Right-anchored; KEEP IN SYNC WITH W3DDisplay.cpp.
+const float  SKIP_BTN_W = 150, SKIP_BTN_H = 54, SKIP_BTN_MX = 20, SKIP_BTN_Y = 18;
+bool         g_skipArmed = false;
+SDL_FingerID g_skipFingerId = 0;
+
+// tuning
+const Uint64 TAP_DEFER_MS   = 45;     // defer left-down this long to catch a 2nd finger
+const float  MOVE_THRESH_PX = 14.0f;  // finger travel that turns a tap into a drag
+const Uint64 TWO_TAP_MAX_MS = 300;    // 2-finger press shorter than this w/o move = right-click
+const float  PAN_K          = 1.0f;   // scroll offset per pixel of 2-finger centroid travel
+const float  PINCH_ZOOM_K   = 0.08f;  // zoom height per pixel of pinch-distance change (×sens)
+
+inline void winSize(float &w, float &h) {
+	int iw = 1640, ih = 720;
+	if (TheSDL3Window) SDL_GetWindowSize(TheSDL3Window, &iw, &ih);
+	w = (float)iw; h = (float)ih;
+}
+
+inline bool inLiveGame() {
 
 /**
  * Constructor: Initialize SDL3 game engine state
