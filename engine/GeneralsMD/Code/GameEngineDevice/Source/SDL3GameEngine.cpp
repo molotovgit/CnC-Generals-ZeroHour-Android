@@ -225,6 +225,30 @@ inline bool onSkipButton(float px, float py) {
 }
 
 // Finger-drag/zoom camera sensitivity, driven by the Options > Scroll Speed slider,
+// which persists m_keyboardScrollFactor (default 0.5, slider max ≈ 1.0). Punchy mapping:
+// default ≈ 3x, slider max ≈ 6x, floored at 0.5x so a drag is never dead. Both the
+// 2-finger pan and the pinch-zoom use this, so one slider scales the whole camera.
+inline float panSensitivity() {
+	float f = TheGlobalData ? TheGlobalData->m_keyboardScrollFactor : 0.5f;
+	float mult = f * 6.0f;
+	if (mult < 0.5f) mult = 0.5f;
+	if (mult > 8.0f) mult = 8.0f;
+	return mult;
+}
+
+void synthMotion(float x, float y) {
+	if (!TheMouse) return;
+	SDL3Mouse *m = dynamic_cast<SDL3Mouse*>(TheMouse); if (!m) return;
+	SDL_Event e; memset(&e, 0, sizeof(e));
+	e.type = SDL_EVENT_MOUSE_MOTION;
+	e.motion.timestamp = SDL_GetTicksNS();
+	e.motion.x = x; e.motion.y = y;
+	m->addSDLEvent(&e);
+}
+void synthButton(Uint8 button, bool down, float x, float y) {
+	if (!TheMouse) return;
+	SDL3Mouse *m = dynamic_cast<SDL3Mouse*>(TheMouse); if (!m) return;
+	SDL_Event e; memset(&e, 0, sizeof(e));
 
 /**
  * Constructor: Initialize SDL3 game engine state
