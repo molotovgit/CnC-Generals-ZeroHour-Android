@@ -390,6 +390,24 @@ int main(int argc, char* argv[])
 		// Create SDL3 window with Vulkan support
 		fprintf(stderr, "INFO: Creating SDL3 Vulkan window...\n");
 		Uint32 windowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;  // Start hidden, show after D3D init
+		int windowW = 1024, windowH = 768;  // Default resolution
+#if defined(__ANDROID__)
+		// @port Android: render at the real screen size (landscape) so the scene
+		// fills the display instead of being scaled from a 4:3 1024x768 buffer
+		// (which left black bars on the sides).
+		{
+			SDL_DisplayID primaryDisplay = SDL_GetPrimaryDisplay();
+			const SDL_DisplayMode* dispMode = SDL_GetCurrentDisplayMode(primaryDisplay);
+			if (dispMode && dispMode->w > 0 && dispMode->h > 0) {
+				windowW = dispMode->w;
+				windowH = dispMode->h;
+				TheAndroidDisplayWidth = windowW;
+				TheAndroidDisplayHeight = windowH;
+				fprintf(stderr, "INFO: Android display size %dx%d\n", windowW, windowH);
+			}
+			windowFlags |= SDL_WINDOW_FULLSCREEN;
+		}
+#endif
 		TheSDL3Window = SDL_CreateWindow(
 			"Command & Conquer Generals: Zero Hour",
 			1024, 768,  // Default resolution
