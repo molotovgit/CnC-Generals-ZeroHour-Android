@@ -197,7 +197,18 @@ static void FilterSoftwareVulkanICDs()
 static void FilterPipeWireOpenAL()
 {
 	// GeneralsX @bugfix Copilot 24/03/2026 PipeWire/OpenAL workaround is Linux-only; keep macOS CoreAudio backend selection untouched.
-	#if defined(__linux__)
+	#if defined(__ANDROID__)
+	// GeneralsX @bugfix Android audio: openal-soft's ONLY working playback backend on Android is
+	// OpenSL ES ("opensl"). Android is also __linux__, so without this the desktop branch below
+	// forced ALSOFT_DRIVERS=pulse,alsa,oss,jack,null,wave — none of which exist on Android — and
+	// openal-soft fell back to the "null" device => total silence. Force the OpenSL ES backend
+	// (it IS compiled into libopenal.so) so music/SFX/speech actually play. This branch must come
+	// first to win over the generic __linux__ case.
+	if (!getenv("ALSOFT_DRIVERS")) {
+		setenv("ALSOFT_DRIVERS", "opensl", 1);
+		fprintf(stderr, "INFO: OpenAL: ALSOFT_DRIVERS=opensl (Android OpenSL ES backend)\n");
+	}
+	#elif defined(__linux__)
 	// Crash: alcOpenDevice() hits 'movaps %xmm1,0x26260(%rbx)' — SSE movaps requires
 	// 16-byte alignment; a misaligned ALCdevice struct faults regardless of backend.
 	// Disabling CPU extensions forces openal-soft to use scalar code that has no
