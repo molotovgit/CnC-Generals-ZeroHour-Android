@@ -65,4 +65,5 @@ int TerminateThread(void *hThread, unsigned long dwExitCode)
 	return 0;
 #else
 	return pthread_cancel((pthread_t)hThread);
+#endif
 }
