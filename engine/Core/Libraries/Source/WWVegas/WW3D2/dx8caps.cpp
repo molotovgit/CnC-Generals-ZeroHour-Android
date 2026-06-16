@@ -743,6 +743,12 @@ void DX8Caps::Check_Texture_Format_Support(WW3DFormat display_format,const D3DCA
 
 void DX8Caps::Check_Render_To_Texture_Support(WW3DFormat display_format,const D3DCAPS8& caps)
 {
+#if !defined(_WIN32)
+	// @port Android/DXVK: see Check_Texture_Format_Support — don't disable all formats
+	// when the backbuffer format doesn't map to a known WW3DFormat.
+	if (display_format==WW3D_FORMAT_UNKNOWN)
+		display_format = WW3D_FORMAT_X8R8G8B8;
+#else
 	if (display_format==WW3D_FORMAT_UNKNOWN) {
 		for (unsigned i=0;i<WW3D_FORMAT_COUNT;++i) {
 			SupportRenderToTextureFormat[i]=false;
