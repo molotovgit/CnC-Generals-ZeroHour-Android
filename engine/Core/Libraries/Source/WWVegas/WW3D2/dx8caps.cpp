@@ -700,6 +700,16 @@ void DX8Caps::Check_Texture_Compression_Support(const D3DCAPS8& caps)
 
 void DX8Caps::Check_Texture_Format_Support(WW3DFormat display_format,const D3DCAPS8& caps)
 {
+#if !defined(_WIN32)
+	// @port Android/DXVK: the Vulkan backbuffer format (e.g. A2B10G10R10 / an sRGB
+	// format) does not always map back to a known WW3DFormat, so display_format arrives
+	// as WW3D_FORMAT_UNKNOWN. The original code then marks EVERY texture format
+	// unsupported — which blacks out the radar/minimap terrain texture and any other
+	// path gated on Support_Texture_Format. Query support against a guaranteed-valid
+	// adapter format (X8R8G8B8) instead of disabling everything.
+	if (display_format==WW3D_FORMAT_UNKNOWN)
+		display_format = WW3D_FORMAT_X8R8G8B8;
+#else
 	if (display_format==WW3D_FORMAT_UNKNOWN) {
 		for (unsigned i=0;i<WW3D_FORMAT_COUNT;++i) {
 			SupportTextureFormat[i]=false;
