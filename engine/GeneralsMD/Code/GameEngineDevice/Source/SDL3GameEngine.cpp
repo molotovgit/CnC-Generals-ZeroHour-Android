@@ -441,6 +441,30 @@ void handleFingerUp(const SDL_TouchFingerEvent &tf) {
 		bool wasTap = (!g_twoMoved) && (SDL_GetTicks() - g_twoStartMs <= TWO_TAP_MAX_MS);
 		g_two = false;
 		if (wasTap && inLiveGame()) rightClick(g_startCx, g_startCy);   // move / attack order
+		dropFinger(idx);
+		if (g_tfCount == 0) { g_suppressLeft = false; g_leftPending = false; g_leftHeld = false; }
+		return;
+	}
+
+	if (tf.fingerID == g_leftId && !g_suppressLeft) {
+		if (g_leftHeld) {
+			releaseLeftHeld(px, py);
+		} else if (g_leftPending) {
+			// fast tap: finger lifted before the commit-defer — press now, and the
+			// up is guaranteed to trail by >= CLICK_HOLD_MS so the click registers.
+			synthLeftDown(g_leftSX, g_leftSY);
+			releaseLeftHeld(g_leftSX, g_leftSY);
+			g_leftPending = false;
+		}
+	}
+	dropFinger(idx);
+	if (g_tfCount == 0) { g_suppressLeft = false; g_escArmed = false; g_skipArmed = false; }
+}
+
+// Run once per event-pump after draining events: release any due synthesized
+// button-ups, and commit a deferred left-down for a stationary single-finger
+// press once the defer window elapses.
+void touchTick() {
 
 /**
  * Constructor: Initialize SDL3 game engine state
