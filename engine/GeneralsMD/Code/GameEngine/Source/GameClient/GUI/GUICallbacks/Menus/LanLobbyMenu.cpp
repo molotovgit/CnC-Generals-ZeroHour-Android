@@ -483,7 +483,7 @@ void LanLobbyMenuInit( WindowLayout *layout, void *userData )
 	TheLAN->init();
 	// GeneralsX @build GitHubCopilot 11/04/2026 Log LAN bind attempt from lobby startup path.
 	DEBUG_LOG(("LanLobbyMenuInit - calling SetLocalIP(%d.%d.%d.%d)", PRINTF_IP_AS_4_INTS(IP)));
-	/* 	fprintf(stderr, "[LAN86] LanLobbyMenuInit SetLocalIP begin %d.%d.%d.%d\n", PRINTF_IP_AS_4_INTS(IP)); */
+	fprintf(stderr, "[LAN86] LanLobbyMenuInit SetLocalIP begin %d.%d.%d.%d\n", PRINTF_IP_AS_4_INTS(IP));
 	if (TheLAN->SetLocalIP(IP) == FALSE) {
 		LANSocketErrorDetected = TRUE;
 		// GeneralsX @build GitHubCopilot 11/04/2026 Explicit failure breadcrumb for LAN socket initialization.
