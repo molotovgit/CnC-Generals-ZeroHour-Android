@@ -1645,6 +1645,23 @@ FontCharsClass::Update_Current_Buffer (int char_width)
 const char *
 FontCharsClass::Locate_Font_FontConfig (const char *font_name)
 {
+#if defined(__ANDROID__)
+	//
+	// @port Android: Android ships no fontconfig config file, so
+	// FcInitLoadConfigAndFonts() fails ("Cannot load default config file")
+	// and no text renders. Resolve font families directly to the phone's
+	// built-in system fonts in /system/fonts instead.
+	//
+	const char *path = "/system/fonts/Roboto-Regular.ttf"; // sans-serif (Arial substitute)
+	if ( font_name != nullptr ) {
+		if ( strstr( font_name, "Times" ) != nullptr || strstr( font_name, "Serif" ) != nullptr )
+			path = "/system/fonts/NotoSerif-Regular.ttf";
+		else if ( strstr( font_name, "Courier" ) != nullptr || strstr( font_name, "Mono" ) != nullptr )
+			path = "/system/fonts/DroidSansMono.ttf";
+	}
+	FreetypeFontPath = path;
+	return FreetypeFontPath;
+#else
 	//
 	//	Initialize Fontconfig library
 	//
