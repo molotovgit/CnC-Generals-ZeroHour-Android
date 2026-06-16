@@ -283,6 +283,30 @@ int main(int argc, char* argv[])
 	// (only when missing or a different size), which the engine then loads normally.
 	{
 		const char* ext = SDL_GetAndroidExternalStoragePath();
+		if (ext != nullptr) {
+			char srcDir[1024];
+			snprintf(srcDir, sizeof(srcDir), "%s/Data/Movies", ext);
+			DIR* d = opendir(srcDir);
+			if (d != nullptr) {
+				mkdir("Data", 0755);
+				mkdir("Data/Movies", 0755);
+				int copied = 0;
+				struct dirent* entry;
+				while ((entry = readdir(d)) != nullptr) {
+					if (entry->d_name[0] == '.') continue;
+					char src[1152], dst[1152];
+					snprintf(src, sizeof(src), "%s/%s", srcDir, entry->d_name);
+					snprintf(dst, sizeof(dst), "Data/Movies/%s", entry->d_name);
+					struct stat ss, ds;
+					if (stat(src, &ss) != 0 || !S_ISREG(ss.st_mode)) continue;
+					if (stat(dst, &ds) == 0 && ds.st_size == ss.st_size) continue;  // already deployed
+					FILE* in = fopen(src, "rb");
+					if (in == nullptr) continue;
+					FILE* out = fopen(dst, "wb");
+					if (out == nullptr) { fclose(in); continue; }
+					char buf[65536]; size_t n;
+					while ((n = fread(buf, 1, sizeof(buf), in)) > 0) fwrite(buf, 1, n, out);
+					fclose(in); fclose(out); copied++;
 	// TheSuperHackers @build felipebraz 13/02/2026
 	// Store command line arguments in globals for CommandLine.cpp parser
 	__argc = argc;
