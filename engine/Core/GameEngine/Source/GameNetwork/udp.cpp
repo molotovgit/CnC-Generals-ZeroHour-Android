@@ -186,7 +186,7 @@ Int UDP::Bind(UnsignedInt IP,UnsignedShort Port)
 	DEBUG_LOG(("UDP::Bind - bind() failed for %d.%d.%d.%d:%d err=%d",
     (ipHostOrder >> 24) & 0xFF, (ipHostOrder >> 16) & 0xFF, (ipHostOrder >> 8) & 0xFF, ipHostOrder & 0xFF,
     portHostOrder, m_lastError));
-  /*   fprintf(stderr, "[LAN86] UDP::Bind bind failed %d.%d.%d.%d:%d err=%d\n",
+  fprintf(stderr, "[LAN86] UDP::Bind bind failed %d.%d.%d.%d:%d err=%d\n",
     (ipHostOrder >> 24) & 0xFF, (ipHostOrder >> 16) & 0xFF, (ipHostOrder >> 8) & 0xFF, ipHostOrder & 0xFF,
     portHostOrder, m_lastError); */
     status=GetStatus();
