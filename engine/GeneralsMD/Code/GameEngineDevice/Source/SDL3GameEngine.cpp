@@ -465,6 +465,17 @@ void handleFingerUp(const SDL_TouchFingerEvent &tf) {
 // button-ups, and commit a deferred left-down for a stationary single-finger
 // press once the defer window elapses.
 void touchTick() {
+	drainUps();
+	if (g_leftPending && !g_leftHeld && g_tfCount == 1 && !g_suppressLeft) {
+		if (SDL_GetTicks() - g_leftDownMs >= TAP_DEFER_MS) {
+			synthLeftDown(g_leftSX, g_leftSY);
+			g_leftPending = false;
+		}
+	}
+}
+
+} // namespace
+#endif // __ANDROID__
 
 /**
  * Constructor: Initialize SDL3 game engine state
