@@ -130,6 +130,30 @@ Bool DecodeNextUtf8Codepoint(const char* text, size_t length, size_t& offset, Un
 
 }
 
+#if defined(__ANDROID__)
+// ============================================================================
+// GeneralsX @feature Android touch → RTS controls
+// SDL's single-finger→mouse synthesis is disabled (SDL_HINT_TOUCH_MOUSE_EVENTS
+// "0" in init()); we synthesize precise input here instead:
+//     1 finger tap    -> left click   (select / press a menu button)
+//     1 finger drag   -> left drag    (drag-box select / move a slider)
+//     2 finger tap    -> right click  (move / attack command)
+//     2 finger drag   -> pan camera   (View::userScrollBy)
+//     2 finger pinch  -> zoom camera  (View::userZoom)
+// The first finger's left-button-down is deferred a few ms so we can tell a
+// 1-finger press apart from the START of a 2-finger gesture — that way a
+// 2-finger gesture never emits a spurious left click (which would deselect
+// units right before a move order, or fire a menu button).
+// ============================================================================
+extern View     *TheTacticalView;
+extern GameLogic *TheGameLogic;
+// In-game ESC/pause menu toggle (QuitMenu.cpp) — same action the desktop ESC key runs.
+extern void ToggleQuitMenu();
+
+namespace {
+
+struct TouchFinger { SDL_FingerID id; float sx, sy, x, y; };
+
 /**
  * Constructor: Initialize SDL3 game engine state
  */
