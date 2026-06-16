@@ -728,6 +728,11 @@ void SDL3GameEngine::pollSDL3Events(void)
 
 		updateTextInputState();
 	}
+
+#if defined(__ANDROID__)
+	// Commit any deferred single-finger left-down whose defer window has elapsed.
+	touchTick();
+#endif
 }
 
 // GeneralsX @bugfix felipebraz 01/04/2026 Enable SDL text input only while an entry gadget owns focus.
