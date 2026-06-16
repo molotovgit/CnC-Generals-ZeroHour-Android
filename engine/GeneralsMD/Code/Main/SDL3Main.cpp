@@ -31,6 +31,13 @@
 // SYSTEM INCLUDES
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
+#if defined(__ANDROID__)
+// GeneralsX @port Android — SDLActivity enters the app through SDL_main (via JNI). Including
+// SDL_main.h in the file that defines main() renames it to SDL_main so it is actually invoked.
+#include <SDL3/SDL_main.h>
+#include <sys/stat.h>   // mkdir()/stat() for app-private data dir
+#include <dirent.h>     // opendir()/readdir() for the external-movies bootstrap
+#endif
 #include <cstdlib>
 #include <cctype>
 #include <cstring>
