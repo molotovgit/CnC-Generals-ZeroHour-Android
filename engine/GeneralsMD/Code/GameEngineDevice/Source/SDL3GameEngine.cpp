@@ -393,6 +393,30 @@ void handleFingerMotion(const SDL_TouchFingerEvent &tf) {
 			if (zoomH != 0.0f) TheTacticalView->userZoom(zoomH);
 		}
 		g_lastCx = cx; g_lastCy = cy; g_lastDist = dist;
+		return;
+	}
+
+	// single-finger drag
+	if (tf.fingerID == g_leftId && !g_suppressLeft) {
+		if (g_leftPending && !g_leftHeld) {
+			float tdx = px - g_leftSX, tdy = py - g_leftSY;
+			if (sqrtf(tdx*tdx + tdy*tdy) > MOVE_THRESH_PX) {
+				synthLeftDown(g_leftSX, g_leftSY);   // anchor the drag at the touch point
+				g_leftPending = false;
+				synthMotion(px, py);
+			}
+		} else if (g_leftHeld) {
+			synthMotion(px, py);
+		}
+	}
+}
+
+void handleFingerUp(const SDL_TouchFingerEvent &tf) {
+	int idx = findFinger(tf.fingerID);
+	if (idx < 0) return;   // untracked (3rd+) finger — ignore
+	float w, h; winSize(w, h);
+	float px = tf.x * w, py = tf.y * h;
+
 
 /**
  * Constructor: Initialize SDL3 game engine state
