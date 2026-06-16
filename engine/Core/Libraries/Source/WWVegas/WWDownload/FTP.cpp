@@ -30,6 +30,7 @@
 // Platform headers with socket_compat.h providing Winsock → POSIX mapping
 #include <stdio.h>
 #include <sys/types.h>
+#if !defined(__ANDROID__)  // GeneralsX @port Android — <sys/timeb.h> absent in bionic (and unused here)
 #include <sys/timeb.h>
 #include <stdlib.h>
 #ifdef _WIN32
