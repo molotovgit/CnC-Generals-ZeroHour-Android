@@ -5,6 +5,10 @@ This is a two‑part build: **(1)** cross‑compile the native engine to a share
 You also need to supply your own **game data** to actually run it (see
 [docs/GAME-FILES.md](docs/GAME-FILES.md)).
 
+> **Just want to play with your own game files?** The step‑by‑step
+> [docs/SETUP-GAME-FILES.md](docs/SETUP-GAME-FILES.md) covers finding your install, copying the
+> `.big` files + `Data/`, packing them (one command), and installing — start there.
+
 > Everything below was validated on Windows 11 with the phone attached over ADB, targeting a
 > Redmi (Mali‑G57, `arm64-v8a`, Android 14+). It works the same on Linux/macOS hosts with the
 > matching toolchains.
