@@ -56,9 +56,12 @@ Camera pan/zoom speed is adjustable and **persisted** via **Options → Scroll S
 1. Get an **arm64 Android** device with **~5 GB free**.
 2. Install the **self‑contained APK** (bundles the game data and unpacks it on first launch).
    *(The self‑contained build is not hosted in this repo — it embeds copyrighted game data.
-   Build your own from your retail files as described in [BUILDING.md](BUILDING.md), which also
-   explains the self‑contained packaging step.)*
+   Build your own from your retail files.)*
 3. First launch shows *"Installing game data…"* for ~1–2 minutes, then the game starts.
+
+👉 **New here? Follow [docs/SETUP-GAME-FILES.md](docs/SETUP-GAME-FILES.md)** — a step‑by‑step guide
+to configuring your own Generals files into a playable APK (find your install → copy the `.big`
+files + `Data/` → one packaging command → build → install).
 
 If you already have the game data deployed to the app's storage, the small engine‑only APK
 boots straight into the game.
