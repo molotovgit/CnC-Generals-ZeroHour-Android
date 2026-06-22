@@ -1,5 +1,9 @@
 # Game files (you supply your own)
 
+> **Just want the steps?** See **[SETUP-GAME-FILES.md](SETUP-GAME-FILES.md)** for a step‑by‑step
+> walkthrough (find your install → copy the files → pack → build → install). This page explains
+> *what* files are needed and *why*.
+
 This project is **engine source code only**. It does **not** contain, and will never contain,
 the game's data files. Those are the copyrighted property of **Electronic Arts** and are not
 covered by the GPL that applies to the engine.
