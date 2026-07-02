@@ -27,3 +27,23 @@ of display modes. On Android/DXVK there is no such table:
 
 Result: native‑resolution fullscreen, correct terrain/water/textures, and an Options menu that
 doesn't crash.
+
+## Follow‑up: side black bars from the display cutout (`styles.xml`)
+
+Even after the engine renders at the native resolution, a phone with a **display cutout**
+(punch‑hole / notch camera) can still show a **black bar on one side** in landscape. That bar is
+not the engine's doing — it's Android reserving the cutout region because the app never opted into
+drawing there. With `targetSdkVersion 35` (edge‑to‑edge enforced) this is especially visible.
+
+Fix in the app theme:
+
+```xml
+<style name="AppTheme" parent="android:Theme.NoTitleBar.Fullscreen">
+    <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+</style>
+```
+
+`shortEdges` lets the game extend into the cutout on the short edges (left/right in landscape),
+which removes the side bar. It needs API 28+ (the app's `minSdk` is 28). This is pure app
+configuration — no engine or SDL code is touched.
+
