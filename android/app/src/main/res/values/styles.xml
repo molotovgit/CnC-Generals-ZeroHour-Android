@@ -2,6 +2,12 @@
 <resources>
     <!-- Base application theme. -->
     <style name="AppTheme" parent="android:Theme.NoTitleBar.Fullscreen">
-        <!-- Customize your theme here. -->
+        <!-- @port Android: let the game draw into the display cutout area. On a
+             punch-hole/notch phone in landscape the system otherwise reserves a
+             black bar on the cutout edge, so the game (already rendering at the
+             native resolution) still shows a side black bar. "shortEdges" lets
+             content extend into the cutout on the short edges (left/right in
+             landscape), removing the bar. Requires API 28+ (minSdk is 28). -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 </resources>
