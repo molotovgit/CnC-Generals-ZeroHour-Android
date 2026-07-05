@@ -996,7 +996,6 @@ void WorldHeightMap::readTexClass(TXTextureClass *texClass, TileData **tileData)
 	// get the file from the description in TheTerrainTypes
 	TerrainType *terrain = TheTerrainTypes->findTerrain( texClass->name );
 	char texturePath[ _MAX_PATH ];
-	texturePath[0] = 0;
 	if (terrain==nullptr)
 	{
 #ifdef LOAD_TEST_ASSETS
@@ -1007,17 +1006,6 @@ void WorldHeightMap::readTexClass(TXTextureClass *texClass, TileData **tileData)
 	{
 		snprintf( texturePath, ARRAY_SIZE(texturePath), "%s%s", TERRAIN_TGA_DIR_PATH, terrain->getTexture().str() );
 		theFile = TheFileSystem->openFile( texturePath, File::READ|File::BINARY);
-	}
-
-	// @port Android diagnostic: log terrain tile TGA resolution (first few classes).
-	{
-		static int s_texClassLogCount = 0;
-		if (s_texClassLogCount < 6) {
-			++s_texClassLogCount;
-			fprintf(stderr, "INFO: readTexClass name='%s' path='%s' file=%s\n",
-				texClass->name.str(), texturePath[0] ? texturePath : "(none)",
-				theFile ? "OPEN" : "NULL");
-		}
 	}
 
 	if (theFile != nullptr) {
