@@ -529,6 +529,13 @@ void W3DShroud::render(CameraClass *cam)
 	if (!m_pSrcTexture)
 		return; //nothing to update from.  Must be in reset state.
 
+	// GeneralsX @bugfix Android: on mobile GPUs the destination video-memory texture can fail to
+	// allocate (ReAcquireResources leaves m_pDstTexture null), yet render() dereferences it below
+	// (Get_Filter/Get_Surface_Level). Also guard the terrain globals used to derive the shroud
+	// rectangle. Bail out cleanly instead of crashing mid-mission.
+	if (!m_pDstTexture || !TheTerrainRenderObject)
+		return;
+
 	if (DX8Wrapper::_Get_D3D_Device8() && (DX8Wrapper::_Get_D3D_Device8()->TestCooperativeLevel()) != D3D_OK)
 		return;	//device not ready to render anything
 
@@ -621,6 +628,8 @@ void W3DShroud::render(CameraClass *cam)
 
 
 	WorldHeightMap *hm=TheTerrainRenderObject->getMap();
+	if (!hm)
+		return;	// GeneralsX @bugfix Android: no map bound yet (e.g. during load / water pre-pass) - avoid null deref
 	Int visStartX=REAL_TO_INT_FLOOR((Real)(hm->getDrawOrgX()-hm->getBorderSizeInline())*MAP_XY_FACTOR/m_cellWidth);	//start of rendered heightmap rectangle
 	if (visStartX < 0)
 		visStartX = 0;	//no shroud is applied in border area so it always starts at > 0
