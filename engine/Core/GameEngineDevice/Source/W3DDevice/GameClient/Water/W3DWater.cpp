@@ -1980,7 +1980,7 @@ Matrix4x4 matProj, matView, matWW3D;
 
 	DX8Wrapper::Invalidate_Cached_Render_States();
 
-	if (TheTerrainRenderObject->getShroud())
+	if (TheTerrainRenderObject && TheTerrainRenderObject->getShroud()) // @port Android @bugfix guard null terrain object (consistent with rest of file)
 	{
 		//do second pass to apply the shroud on water plane
 		W3DShaderManager::setTexture(0,TheTerrainRenderObject->getShroud()->getShroudTexture());
@@ -2429,7 +2429,7 @@ void WaterRenderObjClass::renderWaterMesh()
 	m_pDev->SetVertexShader(WATER_MESH_FVF);
 
 
-	if (TheTerrainRenderObject->getShroud() && !m_trapezoidWaterPixelShader)
+	if (TheTerrainRenderObject && TheTerrainRenderObject->getShroud() && !m_trapezoidWaterPixelShader) // @port Android @bugfix guard null terrain object
 	{	//we have a shroud to apply and can't do it inside the pixel shader.
 		//so do it in stage1
 		W3DShaderManager::setTexture(0,TheTerrainRenderObject->getShroud()->getShroudTexture());
@@ -2968,7 +2968,7 @@ void WaterRenderObjClass::setupFlatWaterShader()
 
 	//Setup shroud to render in same pass as water
 	if (m_trapezoidWaterPixelShader)
-	{	if (TheTerrainRenderObject->getShroud())
+	{	if (TheTerrainRenderObject && TheTerrainRenderObject->getShroud()) // @port Android @bugfix guard null terrain object
 		{
 			W3DShaderManager::setTexture(0,TheTerrainRenderObject->getShroud()->getShroudTexture());
 			//Use stage 3 to apply the shroud
