@@ -115,7 +115,10 @@ radar, the 16-bit sorting-buffer heap corruption, the touch→RTS input synthesi
 This is a volunteer, non-commercial community project — help is very welcome, especially with
 **GPU compatibility** (Adreno/PowerVR/Xclipse), **LAN multiplayer**, controls, and performance.
 
-- 💬 **Questions, ideas, show-and-tell:** [Discussions](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/discussions)
+- 💬 **Questions, ideas, show-and-tell:** [Discussions](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/discussions) — start with the
+  [👋 welcome thread](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/discussions/1), the
+  [🎮 get-it-running guide](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/discussions/2),
+  or post your hardware in [🧭 device compatibility](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/discussions/4).
 - 🐛 **Bugs & feature requests:** [open an issue](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/issues/new/choose)
 - 🛠️ **Want to contribute code?** Read **[CONTRIBUTING.md](CONTRIBUTING.md)** and the
   **[ROADMAP.md](ROADMAP.md)** — the "Help wanted" section lists good first areas.
