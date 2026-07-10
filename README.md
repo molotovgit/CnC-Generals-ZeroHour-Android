@@ -9,6 +9,9 @@
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Discussions](https://img.shields.io/badge/community-discussions-8A2BE2.svg)](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/discussions)
 
+> *A 2003 Direct3D 8 real-time-strategy game, running **natively** on an Android phone — no emulator, no
+> cloud streaming. The real engine, its D3D8 calls translated to Vulkan on the phone's own GPU.*
+
 An **Android (arm64) port** of *Command & Conquer: Generals — Zero Hour*, running the
 original game engine natively on a phone through
 [**GeneralsX**](https://github.com/fbraz3/GeneralsX) (the GPLv3 cross-platform fork of the
@@ -39,6 +42,17 @@ touch‑first control scheme designed for a phone.
 | Video cutscenes (Bink via FFmpeg) | ✅ decodes on device |
 | Touch controls | ✅ full custom scheme (see below) |
 | LAN multiplayer | 🚧 in progress |
+
+---
+
+## Screenshots & demo
+
+Running on a Redmi (Mali‑G57), landscape, at native resolution.
+
+> 📸 **Got it running?** A short gameplay clip or a screenshot is the single most useful thing you can
+> contribute to help this project reach people — post yours in
+> **[Show and tell](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/discussions/7)**
+> (media only — never a built APK or game data). Standout shots can feature right here.
 
 ---
 
@@ -133,6 +147,9 @@ This is a volunteer, non-commercial community project — help is very welcome, 
 > **One hard rule:** never post, attach, or link game data (`.big`/`.bik`/maps/ISOs) or a built
 > self-contained APK. Everyone brings their own retail files. See
 > [docs/GAME-FILES.md](docs/GAME-FILES.md).
+
+**⭐ If a native *Generals* on Android sounds cool, star the repo** — that's the main way other C&C
+fans and Android tinkerers find it, and it's the biggest single thing you can do to help.
 
 ---
 
