@@ -12,6 +12,7 @@ on:
   pull_request:
     paths:
       - 'android/**'
+  workflow_dispatch:   # allow re-running the check manually from the Actions tab
 
 jobs:
   gradle-validate:
