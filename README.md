@@ -1,5 +1,7 @@
 # Command & Conquer: Generals — Zero Hour on Android
 
+[![android-ci](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/actions/workflows/android-ci.yml/badge.svg?branch=main)](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/actions/workflows/android-ci.yml)
+
 An **Android (arm64) port** of *Command & Conquer: Generals — Zero Hour*, running the
 original game engine natively on a phone through
 [**GeneralsX**](https://github.com/fbraz3/GeneralsX) (the GPLv3 cross-platform fork of the
