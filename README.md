@@ -103,7 +103,10 @@ Each is written up in detail under **[docs/](docs/)**, and summarized in
 - **[Touch control scheme](docs/fixes/touch-controls.md)**.
 - **[Self‑contained APK packaging](docs/fixes/self-contained-packaging.md)**.
 
-See **[docs/PORTING-NOTES.md](docs/PORTING-NOTES.md)** for the full technical journal.
+See **[docs/PORTING-NOTES.md](docs/PORTING-NOTES.md)** for the full technical journal, and
+**[docs/DISCOVERIES.md](docs/DISCOVERIES.md)** for in-depth engineering write-ups of the
+non-obvious findings — the `__linux__`-includes-Android audio trap, the 10-bit-swapchain black
+radar, the 16-bit sorting-buffer heap corruption, the touch→RTS input synthesis, and more.
 
 ---
 

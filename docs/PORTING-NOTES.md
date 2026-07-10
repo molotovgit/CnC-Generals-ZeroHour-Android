@@ -4,6 +4,10 @@ A chronological account of taking *Command & Conquer: Generals — Zero Hour* fr
 builds on desktop" to "installs and plays on an Android phone." Each stage links to the focused
 write‑up under [fixes/](fixes/).
 
+> For the long-form engineering deep-dives — symptom → root cause → fix, grounded in the actual
+> code — see **[DISCOVERIES.md](DISCOVERIES.md)**. This page is the timeline; that one is the
+> detail.
+
 ## The stack
 
 ```
