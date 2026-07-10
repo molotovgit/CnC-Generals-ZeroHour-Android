@@ -1,6 +1,9 @@
 # Command & Conquer: Generals — Zero Hour on Android
 
 [![android-ci](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/actions/workflows/android-ci.yml/badge.svg?branch=main)](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/actions/workflows/android-ci.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Discussions](https://img.shields.io/badge/community-discussions-8A2BE2.svg)](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/discussions)
 
 An **Android (arm64) port** of *Command & Conquer: Generals — Zero Hour*, running the
 original game engine natively on a phone through
@@ -101,6 +104,25 @@ Each is written up in detail under **[docs/](docs/)**, and summarized in
 - **[Self‑contained APK packaging](docs/fixes/self-contained-packaging.md)**.
 
 See **[docs/PORTING-NOTES.md](docs/PORTING-NOTES.md)** for the full technical journal.
+
+---
+
+## Community & contributing
+
+This is a volunteer, non-commercial community project — help is very welcome, especially with
+**GPU compatibility** (Adreno/PowerVR/Xclipse), **LAN multiplayer**, controls, and performance.
+
+- 💬 **Questions, ideas, show-and-tell:** [Discussions](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/discussions)
+- 🐛 **Bugs & feature requests:** [open an issue](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/issues/new/choose)
+- 🛠️ **Want to contribute code?** Read **[CONTRIBUTING.md](CONTRIBUTING.md)** and the
+  **[ROADMAP.md](ROADMAP.md)** — the "Help wanted" section lists good first areas.
+- 🤝 We follow a **[Code of Conduct](CODE_OF_CONDUCT.md)**.
+- 🔒 Security issues: see **[SECURITY.md](SECURITY.md)** (please report privately).
+- ❓ Need help getting it running? **[SUPPORT.md](SUPPORT.md)**.
+
+> **One hard rule:** never post, attach, or link game data (`.big`/`.bik`/maps/ISOs) or a built
+> self-contained APK. Everyone brings their own retail files. See
+> [docs/GAME-FILES.md](docs/GAME-FILES.md).
 
 ---
 

@@ -3,6 +3,11 @@
 Thanks for wanting to help bring *Generals: Zero Hour* to Android! This is a community,
 non‑commercial project.
 
+By participating you agree to follow our [Code of Conduct](CODE_OF_CONDUCT.md). New here?
+The [ROADMAP.md](ROADMAP.md) "Help wanted" list is a good place to find something to work on,
+and [Discussions](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/discussions) is the
+place to ask questions or claim an area before you dig in.
+
 ## Ground rules
 
 - **Never** commit, attach or link game data — `.big` archives, `.bik` movies, maps, ISOs, or
