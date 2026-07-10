@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/social-preview.png" alt="Command &amp; Conquer: Generals — Zero Hour — native Android (arm64) port via GeneralsX, DXVK → Vulkan, SDL3" width="840">
+</p>
+
 # Command & Conquer: Generals — Zero Hour on Android
 
 [![android-ci](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/actions/workflows/android-ci.yml/badge.svg?branch=main)](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/actions/workflows/android-ci.yml)
