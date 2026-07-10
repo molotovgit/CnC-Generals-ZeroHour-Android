@@ -1,17 +1,19 @@
 # The 16-bit sorting vertex-buffer overflow that corrupted the heap (SIGSEGV 0x2000000001)
 
 > **TL;DR** — The translucent-geometry sorting path in `sortingrenderer.cpp` batches an
-> unbounded amount of geometry into a *single* dynamic vertex/index buffer, but every count in
-> that path is 16-bit: the dynamic VB/IB, and the sorted triangle indices themselves
-> (`ShortVectorIStruct`). When a batch crossed **65535** vertices or indices, the DX8 dynamic-VB
-> allocation truncated to 16 bits while the fill loop still `memcpy`'d the full 32-bit vertex
-> total — a write off the end of DXVK's mapped buffer that corrupted the allocator heap and
-> produced a delayed, non-deterministic `SIGSEGV 0x2000000001` after **30-70s** of heavy
+> unbounded amount of geometry, but every count in that path is 16-bit: the dynamic vertex buffer,
+> the dynamic index buffer, and the sorted triangle indices themselves (`ShortVectorIStruct`). The
+> heap-corrupting failure was on the **vertex** side — when a batch crossed **65535** vertices, the
+> DX8 dynamic-VB allocation truncated to 16 bits while the fill loop still `memcpy`'d the full
+> 32-bit vertex total — a write off the end of DXVK's mapped buffer that corrupted the allocator
+> heap and produced a delayed, non-deterministic `SIGSEGV 0x2000000001` after **30-70s** of heavy
 > particle/smudge rendering. The fix is one guard in
-> `sortingrenderer.cpp:SortingRendererClass::Insert_To_Sorting_Pool`: flush the pool early so no
-> batch can exceed the 16-bit limits. This is the crash that had forced disabling the live 3D
-> shell map; with it fixed, the shell map and full gameplay run, and only the intro *movies*
-> remain skipped — for an unrelated reason (the FFmpeg video path).
+> `sortingrenderer.cpp:SortingRendererClass::Insert_To_Sorting_Pool` that flushes the pool early so
+> no batch can exceed the 16-bit limits — bounding **both** the vertex total and the index total,
+> the latter belt-and-suspenders alongside a pre-existing index chunk-split already in the source.
+> This is the crash that had forced disabling the live 3D shell map; with it fixed, the shell map
+> and full gameplay run, and only the intro *movies* remain skipped — for an unrelated reason (the
+> FFmpeg video path).
 
 ---
 
@@ -31,9 +33,10 @@ Two properties made it maddening:
   bookkeeping field (a mangled next/size word in an allocator node), not a clean null or a
   simple off-by-one on a real object. The crash site was wherever the heap next walked its own
   metadata, which is to say: anywhere.
-- **The timer, not a line.** The same build crashed at 31s once and 68s the next time on the
-  same scene. Nothing in the immediate backtrace pointed at rendering — because by the time the
-  process faulted, the rendering code that did the damage was long gone.
+- **The timer, not a line.** Runs on the same scene faulted at different points within that
+  **30-70s** window rather than at a fixed moment. Nothing in the immediate backtrace pointed at
+  rendering — because by the time the process faulted, the rendering code that did the damage was
+  long gone.
 
 That signature — implausible fault address, variable delay, backtrace unrelated to the actual
 writer — is the fingerprint of **heap corruption**, not a logic error at the crash site. The
@@ -57,10 +60,10 @@ totals across everything accumulated so far:
 - `overlapping_vertex_count` — total vertices across those nodes,
 - `overlapping_polygon_count` — total triangles across those nodes.
 
-When the pool is flushed (`Flush_Sorting_Pool`), all of that accumulated geometry is written into
-**one** dynamic vertex buffer and **one** dynamic index buffer, sorted, and drawn. The sorted
-triangle indices are stored as `ShortVectorIStruct` — a struct of `short` index components. That
-is the crux of the whole bug:
+When the pool is flushed (`Flush_Sorting_Pool`), all of that accumulated geometry is written into a
+dynamic vertex buffer, sorted, and drawn; the index side is emitted in 16-bit
+`DynamicIBAccessClass` chunks. The sorted triangle indices are stored as `ShortVectorIStruct` — a
+struct of `unsigned short` index components. That 16-bit width is the crux of the whole bug:
 
 > **Everything on this path is 16-bit.** The dynamic VB is allocated with an unsigned-short
 > count. The dynamic IB is 16-bit. The sorted indices (`ShortVectorIStruct`) are 16-bit. A single
@@ -112,17 +115,27 @@ The in-code comment on the fix states the mechanism directly:
 > `// off the end of the DXVK-mapped buffer and corrupting the allocator heap`
 > `// (SIGSEGV 0x2000000001 after 30-70s of particle/smudge rendering).`
 
-There are actually *two* 16-bit ceilings, and the fix respects both:
+There are actually *two* 16-bit ceilings, and the fix respects both — but they are not equally
+dangerous:
 
-1. **Vertices** — the dynamic VB is allocated with a 16-bit count, so
-   `overlapping_vertex_count + state->vertex_count` must stay ≤ 65535.
-2. **Indices** — each triangle contributes three 16-bit indices into the `ShortVectorIStruct`
-   sorted-index storage, so `(overlapping_polygon_count + state->polygon_count) * 3` — the index
-   count, not the polygon count — must stay ≤ 65535.
+1. **Vertices (the heap-corruption path).** The dynamic VB is allocated with a 16-bit count, so
+   `overlapping_vertex_count + state->vertex_count` must stay ≤ 65535. This is the ceiling whose
+   crossing truncated the allocation while the fill wrote the full 32-bit total — the out-of-bounds
+   write that corrupted the heap.
+2. **Indices (already chunk-split).** Each triangle contributes three 16-bit indices into the
+   `ShortVectorIStruct` sorted-index storage, so `(overlapping_polygon_count + state->polygon_count) * 3`
+   — the index count, not the polygon count — must stay ≤ 65535. The index *emission* was already
+   protected in the source by a separate, pre-existing chunk-splitting fix that walks the sorted
+   indices in `DynamicIBAccessClass` chunks bounded to `chunkCount * 3 ≤ 65535`. So crossing the raw
+   index ceiling produced wrapped/garbage `unsigned short` indices — a visual defect — rather than
+   the heap-corrupting write.
 
-Either ceiling, crossed, produces the same class of out-of-bounds write. A scene heavy in tiny
-particle quads tends to hit the *index* ceiling first (many triangles, modest vertices); a scene
-of large translucent sheets can hit the *vertex* ceiling first. Both were reachable.
+So the crash was specifically the **vertex** ceiling. The new early-flush guard still bounds the
+index total as well: that is cheap belt-and-suspenders which also keeps each flushed batch
+internally coherent (one accumulation window, one consistent set of counts) instead of relying
+solely on the downstream chunk-split. A scene heavy in tiny particle quads tends to press the
+*index* total first (many triangles, modest vertices); large translucent sheets press the *vertex*
+total first — the guard closes the batch on whichever comes first.
 
 ## Why the crash is delayed and looked non-deterministic
 
@@ -159,7 +172,8 @@ play never surface it, while Android hit it in under a minute?
 
 Because whether an out-of-bounds *write* becomes an observable *crash* depends entirely on **what
 lives immediately after the buffer**, and that layout is a property of the allocator and the
-buffer model — not of the buggy code:
+buffer model — not of the buggy code. The mechanism below is an informed inference from how the two
+buffer models allocate, not something instrumented in this codebase:
 
 - **On the original DX8 path**, dynamic vertex buffers are driver/GPU-managed. The runtime and
   driver over-allocate and page-round, buffers live in memory the CPU heap doesn't reuse, and the
