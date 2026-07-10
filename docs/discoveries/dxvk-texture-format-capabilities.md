@@ -143,9 +143,11 @@ now create its terrain texture — and immediately hit the second bug.
 
 The radar does not render its terrain overview on the GPU. It **CPU-fills a locked texture
 surface**: it locks the terrain texture, walks the surface pixel by pixel, and writes color values
-into the mapped memory. To advance from one pixel/row to the next it needs the surface's byte
-stride, which it derives from the surface format's bytes-per-pixel (via
-`Get_Bytes_Per_Pixel(surfaceDesc.Format)`).
+into the mapped memory. The *row-to-row* stride it uses is the `pitch` returned by the lock
+(`Lock(&pitch)`) — that value comes from DXVK and is correct. The trap is the *per-pixel* step: to
+place each pixel within a row and to size each write, the fill uses the surface format's
+bytes-per-pixel from `Get_Bytes_Per_Pixel(surfaceDesc.Format)` — effectively
+`dst = pBits + y*pitch + x*bytesPerPixel`, then a `memcpy` of `bytesPerPixel` bytes.
 
 Which format the surface has is decided by `W3DRadar.cpp:W3DRadar::initializeTextureFormats`, which
 holds an ordered preference list and picks the first entry the caps table reports supported:
@@ -165,10 +167,13 @@ lifetime of the shipped game. On DXVK it is a trap: DXVK reports `R8G8B8` as **s
 radar happily selects it — but DXVK does not actually store a 24-bit texture. It backs `R8G8B8`
 with a 32-bit allocation. The caps query and the real memory layout disagree by one byte per pixel.
 
-The radar's CPU fill trusts the format name, computes a 3-byte stride, and writes 24-bit-packed RGB
-into a buffer whose true stride is 4 bytes. Every pixel after the first drifts out of alignment; the
-readback the game samples is effectively garbage, which presented as black terrain. There was no
-crash and no error — the lock, fill, and unlock all "succeeded"; only the arithmetic was wrong.
+The radar's CPU fill trusts the format name: it steps `bytesPerPixel = 3` per pixel and writes
+3 bytes per texel, into a surface DXVK actually laid out at **4** bytes per pixel. (The row-to-row
+`pitch` came correctly from the lock — it is the intra-row, per-pixel arithmetic that is wrong.)
+Every pixel after the first in a row drifts one byte further out of alignment, and each 3-byte write
+leaves one byte of every 4-byte texel untouched; the readback the game samples is effectively
+garbage, which presented as black terrain. There was no crash and no error — the lock, fill, and
+unlock all "succeeded"; only the per-pixel arithmetic was wrong.
 
 The fix is to never let 24-bit be chosen on this path. On non-Windows the preference list is
 prepended with the byte-exact 32-bit formats, so a 32-bit format is always selected first and the
