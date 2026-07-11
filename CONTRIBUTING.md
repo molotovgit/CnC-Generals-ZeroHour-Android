@@ -8,6 +8,16 @@ The [ROADMAP.md](ROADMAP.md) "Help wanted" list is a good place to find somethin
 and [Discussions](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/discussions) is the
 place to ask questions or claim an area before you dig in.
 
+## Ways to help (pick your time budget)
+
+You don't need to touch the engine to be useful — most of what the project needs right now isn't code.
+
+- **~5 minutes** — If you own the game, install it and [file a device report](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/issues/new?template=device_report.yml): your phone, GPU, and how far it got. Working *or* broken both matter — mapping which hardware runs it is the current top priority, and Adreno/PowerVR/Xclipse results are gold since only Mali is confirmed so far. Starring the repo and posting a screenshot in [Show and tell](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/discussions/7) also genuinely helps other people find it.
+- **~30 minutes** — Pick a [good first issue](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22), or improve the docs — a confusing step in [SETUP-GAME-FILES.md](docs/SETUP-GAME-FILES.md), a missing detail in [BUILDING.md](BUILDING.md). Doc PRs are some of the most valuable ones we get.
+- **A weekend** — Take on a [help-wanted](https://github.com/molotovgit/CnC-Generals-ZeroHour-Android/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) area: GPU bring-up on non-Mali hardware, LAN multiplayer, controls polish, or performance. Comment on the issue first so we don't double up.
+
+If you're not sure where you fit, open a thread in Discussions and say what you're into — I'll point you at something.
+
 ## Ground rules
 
 - **Never** commit, attach or link game data — `.big` archives, `.bik` movies, maps, ISOs, or
