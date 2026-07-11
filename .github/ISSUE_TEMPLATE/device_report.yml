@@ -1,0 +1,72 @@
+name: 📱 Device compatibility report
+description: Tried it on your phone? Tell us what happened — this is the single most useful thing you can post.
+title: "[device] <phone model> — <GPU>"
+labels: ["device-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing. Every report — working or broken — helps map which hardware this runs on.
+        Right now the only confirmed-good GPU is **Mali-G57**, so Adreno / PowerVR / Xclipse results are
+        especially valuable. Don't worry about filling in every field; whatever you know is fine.
+
+        **One rule:** no game data (`.big`/`.bik`/maps) and no built APK in the report — screenshots of
+        gameplay are welcome, files are not.
+  - type: input
+    id: device
+    attributes:
+      label: Phone / tablet model
+      placeholder: e.g. Redmi Note 12, Samsung Galaxy S23, Pixel 7
+    validations:
+      required: true
+  - type: input
+    id: soc
+    attributes:
+      label: Chipset / SoC
+      placeholder: e.g. Snapdragon 8 Gen 2, Dimensity 1080, Exynos 2200
+  - type: dropdown
+    id: gpu
+    attributes:
+      label: GPU family
+      description: Check a GPU-info app if you're not sure — it's the field that matters most.
+      options:
+        - Mali (ARM)
+        - Adreno (Qualcomm / Snapdragon)
+        - PowerVR (Imagination)
+        - Xclipse (Samsung / AMD RDNA)
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Android version
+      placeholder: e.g. Android 14
+  - type: dropdown
+    id: result
+    attributes:
+      label: How far did it get?
+      options:
+        - Plays campaigns fine
+        - Plays skirmish fine
+        - Reaches the main menu
+        - Boots but rendering is wrong (black/garbled/missing UI)
+        - Crashes before the menu
+        - Won't launch at all
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: What you saw
+      description: Anything notable — a specific crash, a graphical glitch, rough framerate, a mission it died on. Paste a log snippet if you have one.
+      placeholder: |
+        Boots to menu fine, but the radar in the bottom-left is solid black.
+        Skirmish otherwise plays at a smooth ~50fps.
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Before you submit
+      options:
+        - label: I have not attached or linked any game data (`.big`/`.bik`/maps) or a built APK.
+          required: true

@@ -1,0 +1,77 @@
+name: 🐛 Bug report
+description: Something crashes or renders wrong on your device
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. The more of the device fields you can fill in, the faster this gets
+        diagnosed — a lot of issues turn out to be GPU-specific.
+
+        **One rule:** don't attach or link game data (`.big`/`.bik`/maps) or a built APK. A log
+        snippet and a screenshot of the glitch are exactly what helps.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: How far does it get — boot / main menu / in a mission / skirmish? What goes wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Launch the app
+        2. Start a skirmish on <map>
+        3. ...
+  - type: input
+    id: device
+    attributes:
+      label: Device model
+      placeholder: e.g. Redmi Note 12
+    validations:
+      required: true
+  - type: dropdown
+    id: gpu
+    attributes:
+      label: GPU family
+      options:
+        - Mali (ARM)
+        - Adreno (Qualcomm / Snapdragon)
+        - PowerVR (Imagination)
+        - Xclipse (Samsung / AMD RDNA)
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Android version
+      placeholder: e.g. Android 14
+  - type: dropdown
+    id: subsystem
+    attributes:
+      label: Which subsystem
+      options:
+        - Rendering
+        - Input / touch controls
+        - Audio
+        - Minimap / radar
+        - Cutscene / video
+        - Packaging / first-run
+        - Other / not sure
+  - type: textarea
+    id: log
+    attributes:
+      label: Log snippet
+      description: The app's private log (stderr is redirected there — the relevant `docs/fixes/*.md` says where). Paste the lines around the crash.
+      render: text
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Before you submit
+      options:
+        - label: I have not attached or linked any game data (`.big`/`.bik`/maps) or a built APK.
+          required: true
