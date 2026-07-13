@@ -47,6 +47,10 @@ Key CMake integration points (see the `cmake/` files and `docs/fixes/`): `SAGE_U
 selects the OpenAL Soft backend; SDL3 and FFmpeg come from vcpkg; DXVK is built as a separate
 set of `.so` files (`libdxvk_d3d8.so`, `libdxvk_d3d9.so`).
 
+> DXVK uses **meson**, not CMake, so it's cross-compiled separately — see
+> **[docs/BUILDING-DXVK-ANDROID.md](docs/BUILDING-DXVK-ANDROID.md)** for the NDK cross file and
+> the exact build steps.
+
 ## 2. Package the Android app
 
 Stage the native libraries into the Gradle project, then assemble:
